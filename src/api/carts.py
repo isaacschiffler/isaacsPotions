@@ -2,6 +2,8 @@ from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel
 from src.api import auth
 from enum import Enum
+import sqlalchemy
+from src import database as db
 
 router = APIRouter(
     prefix="/carts",
@@ -85,6 +87,7 @@ def post_visits(visit_id: int, customers: list[Customer]):
 @router.post("/")
 def create_cart(new_cart: Customer):
     """ """
+
     return {"cart_id": 1}
 
 
@@ -104,6 +107,20 @@ class CartCheckout(BaseModel):
 
 @router.post("/{cart_id}/checkout")
 def checkout(cart_id: int, cart_checkout: CartCheckout):
+    #subtract potions and add gold
     """ """
 
-    return {"total_potions_bought": 1, "total_gold_paid": 50}
+    with db.engine.begin() as connection:
+        result = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
+        green = result.fetchone()
+        num_potions = green[2]
+        gold = green[4]
+        id = 1 # hard coded because right now we only have one row... change when more complex
+        connection.execute(sqlalchemy.text(""" 
+                                    UPDATE global_inventory
+                                    SET num_green_potions = :potions, gold = :gold
+                                    WHERE id = :id;
+                                    """),
+                                    {'potions': num_potions - 1, 'gold': gold + 48, 'id': id})
+
+    return {"total_potions_bought": 1, "total_gold_paid": 48}
