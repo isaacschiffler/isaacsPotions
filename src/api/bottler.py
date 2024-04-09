@@ -69,6 +69,7 @@ def get_bottle_plan():
                 "potion_type": [0, 100, 0, 0], #hard coded to create just green potions for now...
                 "quantity": quantity,
         })
+    print(bottle_plan) # for debugging
         
 
     return bottle_plan
