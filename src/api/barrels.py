@@ -64,8 +64,8 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         print("Current database status: " + str(green[2]) + " " + str(green[3]) + " " + str(green[4]))
         num_green_potions = green[2]
         gold = green[4]
-        buy_num = 0
         for i in wholesale_catalog:
+            buy_num = 0
             available = i.quantity
             if i.potion_type == [0, 1, 0, 0]: #check if it is a green barrel
                 while gold >= i.price and available > 0:
