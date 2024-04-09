@@ -67,17 +67,19 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         buy_num = 0
         for i in wholesale_catalog:
             available = i.quantity
-            if i.potion_type == [0, 1, 0, 0]:
+            if i.potion_type == [0, 1, 0, 0]: #check if it is a green barrel
                 while gold >= i.price and available > 0:
                     buy_num += 1
                     gold -= i.price
                     available -= 1
-                what_i_want.append({
-                    "sku": i.sku,
-                    "quantity": buy_num
-                })
-        if num_green_potions >= 10 or buy_num == 0:
+                if buy_num > 0: #add to what i want if I can buy more than 0
+                    what_i_want.append({
+                        "sku": i.sku,
+                        "quantity": buy_num
+                    })
+        if num_green_potions >= 10:
             what_i_want = []
+    print(what_i_want) #for debugging
 
 
     return what_i_want
