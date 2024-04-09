@@ -27,17 +27,16 @@ def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
     print(f"barrels delievered: {barrels_delivered} order_id: {order_id}")
 
     for i in barrels_delivered:
-    
         quantity = i.quantity
         ml = i.ml_per_barrel
         price = i.price
         id = 1 # hard coded because we only have one row... change when more complex
 
-        if i.potion_type == [0, 1, 0, 0]:
+        if i.potion_type == [0, 1, 0, 0]: # we should only be buying green barrels...
             with db.engine.begin() as connection:
                 result = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
                 green = result.fetchone()
-                print(green)
+                print("Current database status: " + str(green[2]) + " " + str(green[3]) + " " + str(green[4])) #for debugging
                 num_green_ml = green[3]
                 gold = green[4]
 
@@ -77,7 +76,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                         "sku": i.sku,
                         "quantity": buy_num
                     })
-        if num_green_potions >= 10:
+        if num_green_potions >= 10: #if i already have 10 potions
             what_i_want = []
     print(what_i_want) #for debugging
 

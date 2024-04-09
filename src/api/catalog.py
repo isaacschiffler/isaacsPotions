@@ -19,7 +19,7 @@ def get_catalog():
         num_green_potions = row[2]
         print("Number of green potions offered: " + str(num_green_potions))
         if num_green_potions > 0:
-            num_green_potions = 1
+            num_green_potions = 1 #only offering 1 potion for now...
             my_catalog.append({
                 "sku": "GREEN_POTION_0",
                 "name": "green potion",
