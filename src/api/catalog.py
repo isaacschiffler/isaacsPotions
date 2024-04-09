@@ -17,14 +17,14 @@ def get_catalog():
         result = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
         row = result.fetchone()
         num_green_potions = row[2]
-        print(num_green_potions)
+        print("Number of green potions offered " + num_green_potions)
         if num_green_potions > 0:
             num_green_potions = 1
             my_catalog.append({
                 "sku": "GREEN_POTION_0",
                 "name": "green potion",
                 "quantity": num_green_potions,
-                "price": 48,
+                "price": 50,
                 "potion_type": [0, 100, 0, 0],
             })
 

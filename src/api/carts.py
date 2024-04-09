@@ -88,7 +88,7 @@ def post_visits(visit_id: int, customers: list[Customer]):
 def create_cart(new_cart: Customer):
     """ """
 
-    return {"cart_id": 1}
+    return {"cart_id": "1"}
 
 
 class CartItem(BaseModel):
@@ -121,6 +121,6 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                                     SET num_green_potions = :potions, gold = :gold
                                     WHERE id = :id;
                                     """),
-                                    {'potions': num_potions - 1, 'gold': gold + 48, 'id': id})
+                                    {'potions': num_potions - 1, 'gold': gold + 50, 'id': id})
 
-    return {"total_potions_bought": 1, "total_gold_paid": 48}
+    return {"total_potions_bought": 1, "total_gold_paid": 50}

@@ -4,10 +4,6 @@ from src.api import auth
 import sqlalchemy
 from src import database as db
 
-'''
-with db.engine.begin() as connection:
-    result = connection.execute(sqlalchemy.text(sql_to_execute))
-'''
 
 router = APIRouter(
     prefix="/barrels",
@@ -65,7 +61,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
         green = result.fetchone()
-        print(green)
+        print("Current database status: " + str(green[2]) + " " + str(green[3]) + " " + str(green[4]))
         num_green_potions = green[2]
         gold = green[4]
         buy_num = 0
@@ -76,16 +72,12 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                     buy_num += 1
                     gold -= i.price
                     available -= 1
-            what_i_want.append({
-                "sku": i.sku,
-                "quantity": buy_num
-            })
-        if num_green_potions >= 10:
-            buy_num = 0
-            what_i_want = [{
-                "sku": "nothing",
-                "quantity": 0
-            }]
+                what_i_want.append({
+                    "sku": i.sku,
+                    "quantity": buy_num
+                })
+        if num_green_potions >= 10 or buy_num == 0:
+            what_i_want = []
 
 
     return what_i_want
