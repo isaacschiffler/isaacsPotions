@@ -17,7 +17,7 @@ def get_catalog():
         result = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
         row = result.fetchone()
         num_green_potions = row[2]
-        print("Number of green potions offered " + num_green_potions)
+        print("Number of green potions offered: " + str(num_green_potions))
         if num_green_potions > 0:
             num_green_potions = 1
             my_catalog.append({
