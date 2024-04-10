@@ -30,8 +30,8 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
         green = result.fetchone()
-        num_potions = green[2]
-        num_green_ml = green[3]
+        num_potions = green[1]
+        num_green_ml = green[2]
         id = 1 # hard coded because right now we only have one row... change when more complex
         ml = order_quantity * 100
         connection.execute(sqlalchemy.text("""
@@ -61,7 +61,7 @@ def get_bottle_plan():
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
         green = result.fetchone()
-        ml = green[3]
+        ml = green[2]
         quantity = ml // 100 #calculate how many potions of 100 ml of green we can make (floor function)
 
     if quantity > 0:

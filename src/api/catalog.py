@@ -16,10 +16,10 @@ def get_catalog():
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
         row = result.fetchone()
-        num_green_potions = row[2]
+        num_green_potions = row[1]
         print("Number of green potions offered: " + str(num_green_potions))
         if num_green_potions > 0:
-            num_green_potions = 1 #only offering 1 potion for now...
+            num_green_potions = 1 # only offering 1 potion for now...
             my_catalog.append({
                 "sku": "GREEN_POTION_0",
                 "name": "green potion",
