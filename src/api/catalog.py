@@ -15,8 +15,8 @@ def get_catalog():
     '''use start database connection green_potion_inventory = get current inventory of green potions'''
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
-        row = result.fetchone()
-        num_green_potions = row[1]
+        globe = result.fetchone()
+        num_green_potions = globe[1]
         print("Number of green potions offered: " + str(num_green_potions))
         if num_green_potions > 0:
             num_green_potions = 1 # only offering 1 potion for now...
