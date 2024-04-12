@@ -96,9 +96,9 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
         #         if blue_quant > 0:
         #             update_potions(row[1], num_blue_potions + blue_quant, connection)
         globe = g_inventory.fetchone()
-        green_ml = globe[2]
-        red_ml = globe[4]
-        blue_ml = globe[5]
+        red_ml = globe[2]
+        green_ml = globe[3]
+        blue_ml = globe[4]
         # subtract potion mats used
         green_ml -= green_quant
         red_ml -= red_quant
@@ -134,13 +134,14 @@ def get_bottle_plan():
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
         globe = result.fetchone()
-        green_ml = globe[2]
-        red_ml = globe[4]
-        blue_ml = globe[5]
+        red_ml = globe[2]
+        green_ml = globe[3]
+        blue_ml = globe[4]
         green_quant = green_ml // 100 #calculate how many potions of 100 ml of green we can make (floor function)
         red_quant = red_ml // 100
         blue_quant = blue_ml // 100
 
+    # current logic is to just make solid color potions
     if green_quant > 0:
         bottle_plan.append({
                 "potion_type": [0, 100, 0, 0],
@@ -156,6 +157,7 @@ def get_bottle_plan():
                 "potion_type": [0, 0, 100, 0],
                 "quantity": blue_quant,
         })
+
     print(bottle_plan) # for debugging
         
 

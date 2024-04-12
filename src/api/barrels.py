@@ -31,10 +31,10 @@ def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
         result = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
         globe = result.fetchone()
         print("Current database status: " + str(globe[1]) + " " + str(globe[2]) + " " + str(globe[3])) #for debugging
-        num_green_ml = globe[2]
-        gold = globe[3]
-        num_red_ml = globe[4]
-        num_blue_ml = globe[5]
+        gold = globe[1]
+        num_red_ml = globe[2]
+        num_green_ml = globe[3]
+        num_blue_ml = globe[4]
         new_green = 0
         new_red = 0
         new_blue = 0
@@ -79,12 +79,11 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         g_inventory = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
         globe = g_inventory.fetchone()
         print("Current database status: " + str(globe[1]) + " " + str(globe[2]) + " " + str(globe[3]) + " " + str(globe[4]) + " " + str(globe[5]))
-        num_green_potions = globe[1]
-        gold = globe[3]
+        gold = globe[1]
         # get current ml inventory
-        green_ml = globe[2]
-        red_ml = globe[4]
-        blue_ml = globe[5]
+        red_ml = globe[2]
+        green_ml = globe[3]
+        blue_ml = globe[4]
         # get catalog offerings for each color barrel
         red_offers = [x for x in wholesale_catalog if x.potion_type == [1, 0, 0, 0]]
         green_offers = [x for x in wholesale_catalog if x.potion_type == [0, 1, 0, 0]]
@@ -168,11 +167,6 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
             # break out of loop if nothing is affordable that is green or red or blue
             if can_buy_red == False and can_buy_blue == False and can_buy_green == False:
                 break
-
-
-
-        if num_green_potions >= 10: #if i already have 10 potions
-            what_i_want = []
 
     print(what_i_want) #for debugging
 
