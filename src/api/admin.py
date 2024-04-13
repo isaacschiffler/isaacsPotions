@@ -28,8 +28,10 @@ def reset():
                                                 WHERE id = 1;
                                                 """))
                 
-                # reset/clear potion_inventory
+                # reset/clear potion_inventory, carts, cart_items
                 connection.execute(sqlalchemy.text("DELETE FROM potion_inventory;"))
+                connection.execute(sqlalchemy.text("DELETE FROM carts"))
+                connection.execute(sqlalchemy.text("DELETE FROM cart_items"))
 
                  
     return "OK"

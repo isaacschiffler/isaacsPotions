@@ -124,7 +124,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                 if bought_this_round == False:
                     can_buy_green = False
 
-            elif red_ml <= green_ml and red_ml <= blue_ml and can_buy_red or (can_buy_red and not can_buy_blue and not can_buy_green):
+            elif red_ml <= blue_ml and can_buy_red or (can_buy_red and not can_buy_blue and not can_buy_green):
                 # buy a red barrel
                 for i in red_offers:
                     if i.price <= gold:
@@ -156,7 +156,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                             })
                         else: #is in what i want
                             what_i_want[wanted_already]["quantity"] = what_i_want[wanted_already]["quantity"] + 1
-                        green_ml += i.ml_per_barrel
+                        blue_ml += i.ml_per_barrel
                         gold -= i.price
                         bought_this_round = True
                         i.quantity = i.quantity - 1

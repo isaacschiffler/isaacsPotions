@@ -17,22 +17,39 @@ class PotionInventory(BaseModel):
     quantity: int
 
 
+potion_names = {
+    (100, 0, 0, 0): "red potion",
+    (0, 100, 0, 0): "green potion",
+    (0, 0, 100, 0): "blue potion",
+    (0, 0, 0, 100): "dark potion",
+    (33, 33, 34, 0): "even split b",
+    (34, 33, 33, 0): "even split r",
+    (33, 34, 33, 0): "even split g"
+}
+
+
 def update_potions(type, quantity, connection):
-    result = connection.execute(sqlalchemy.text("SELECT * FROM potion_inventory WHERE r = :r AND g = :g AND b = :b AND d = :d LIMIT 1"), 
-                                {'r': type[0],
-                                 'g': type[1],
-                                 'b': type[2],
-                                 'd': type[3]})
+    tuple_type = tuple(type)
+    name = potion_names[tuple_type]
+    sku = name.upper()
+    sku = sku.replace(' ', '_')
+    sku += "_0"
+    result = connection.execute(sqlalchemy.text("SELECT * FROM potion_inventory WHERE sku = :sku LIMIT 1;"), 
+                                {'sku': sku})
     row = result.fetchone()
     # check for existence!
     if not row:
         # insert
-        connection.execute(sqlalchemy.text("INSERT INTO potion_inventory (r, g, b, d, quantity) VALUES (:r, :g, :b, :d, :quant)"), 
-                           {'r': type[0],
+        connection.execute(sqlalchemy.text("INSERT INTO potion_inventory (sku, r, g, b, d, quantity, name, price) VALUES (:sku, :r, :g, :b, :d, :quant, :name, :price);"), 
+                           {'sku': sku,
+                            'r': type[0],
                             'g': type[1],
                             'b': type[2],
                             'd': type[3],
-                            'quant': quantity})
+                            'quant': quantity,
+                            'name': name,
+                            'price': 50 # hard coded for now but eventually make it vary...
+                            })
         print("inserting potion type: " + str(type))
     else:
         # update
@@ -41,13 +58,10 @@ def update_potions(type, quantity, connection):
         connection.execute(sqlalchemy.text("""
                                     UPDATE potion_inventory
                                     SET quantity = :quant
-                                    WHERE r = :r AND g = :g AND b = :b AND d = :d;
+                                    WHERE sku = :sku;
                                     """),
                                     {'quant': quantity + current_quant, 
-                                     'r': type[0],
-                                     'g': type[1],
-                                     'b': type[2],
-                                     'd': type[3]})
+                                     'name': name})
     
 
 @router.post("/deliver/{order_id}")
@@ -60,16 +74,6 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
     red_quant = 0
     blue_quant = 0
     dark_quant = 0
-    # for i in potions_delivered:
-    #     # check what type of potion and store the quantity we get
-    #     if i.potion_type == [0, 100, 0, 0]:
-    #         green_quant += i.quantity
-    #     elif i.potion_type == [100, 0, 0, 0]:
-    #         red_quant += i.quantity
-    #     elif i.potion_type == [0, 0, 100, 0]:
-    #         blue_quant += i.quantity
-    #     else:
-    #         print("somehow got delivered a non-solid color potion...") # version 2 debug impl
     for i in potions_delivered:
         red_quant += i.potion_type[0] * i.quantity
         green_quant += i.potion_type[1] * i.quantity
@@ -77,32 +81,20 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
         dark_quant += i.potion_type[3] * i.quantity
 
     with db.engine.begin() as connection:
-        g_inventory = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
-        # p_inventory = connection.execute(sqlalchemy.text("SELECT * FROM potion_inventory"))
         for i in potions_delivered:
             update_potions(i.potion_type, i.quantity, connection)
-        # for row in p_inventory:
-        #     #row[1] = potion type, row[2] = quantity
-        #     if row[1] == [100, 0, 0, 0]: # solid red potion count
-        #         num_red_potions = row[2]
-        #         if red_quant > 0:
-        #             update_potions(row[1], num_red_potions + red_quant, connection)
-        #     elif row[1] == [0, 100, 0, 0]: # solid green
-        #         num_green_potions = row[2]
-        #         if green_quant > 0:
-        #             update_potions(row[1], num_green_potions + green_quant, connection)
-        #     elif row[1] == [0, 0, 100, 0]: # solid blue
-        #         num_blue_potions = row[2]
-        #         if blue_quant > 0:
-        #             update_potions(row[1], num_blue_potions + blue_quant, connection)
+
+        g_inventory = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
         globe = g_inventory.fetchone()
         red_ml = globe[2]
         green_ml = globe[3]
         blue_ml = globe[4]
+
         # subtract potion mats used
         green_ml -= green_quant
         red_ml -= red_quant
         blue_ml -= blue_quant
+
         # update ml in database
         connection.execute(sqlalchemy.text("""
                                     UPDATE global_inventory
@@ -110,7 +102,6 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
                                     WHERE id = 1;
                                     """),
                                     {'green': green_ml, 'red': red_ml, 'blue': blue_ml})
-        # DOUBLE CHECK AND TEST EVERYTHING ---------------------------------------------------------------------------------------------------------
 
 
     return "OK"
@@ -162,6 +153,7 @@ def get_bottle_plan():
         
 
     return bottle_plan
+
 
 if __name__ == "__main__":
     print(get_bottle_plan())

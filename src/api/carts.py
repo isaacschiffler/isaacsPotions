@@ -4,6 +4,7 @@ from src.api import auth
 from enum import Enum
 import sqlalchemy
 from src import database as db
+import uuid
 
 router = APIRouter(
     prefix="/carts",
@@ -86,9 +87,28 @@ def post_visits(visit_id: int, customers: list[Customer]):
 
 @router.post("/")
 def create_cart(new_cart: Customer):
-    """ """
+    """ create a new cart for the given customer """
+    # do carts persist through to customer revisiting?
+    # aka, will a customer call create_cart if they already have a cart?
+    #      if so, make sure to check for existence before inserting a new on in!
+    with db.engine.begin() as connection:
+        result = connection.execute(sqlalchemy.text("INSERT INTO carts (name, class, level) VALUES (:name, :class, :level);"),
+                                    {
+                                        'name': new_cart.customer_name,
+                                        'class': new_cart.character_class,
+                                        'level': new_cart.level
+                                    })
+        result = connection.execute(sqlalchemy.text("SELECT id FROM carts WHERE name = :name AND class = :class AND level = :level;"),
+                                    {
+                                        'name': new_cart.customer_name,
+                                        'class': new_cart.character_class,
+                                        'level': new_cart.level
+                                    })
+        id = result.fetchone()[0]
 
-    return {"cart_id": "1"}
+        print("New cart: " + str(id) + " " + new_cart.customer_name + " " + new_cart.character_class + " " + str(new_cart.level))
+
+    return {"cart_id": str(id)}
 
 
 class CartItem(BaseModel):
@@ -97,7 +117,31 @@ class CartItem(BaseModel):
 
 @router.post("/{cart_id}/items/{item_sku}")
 def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
-    """ """
+    """ add quantity of items """
+    with db.engine.begin() as connection:
+        result = connection.execute(sqlalchemy.text("SELECT * FROM cart_items WHERE cart_id = :cart_id AND item_sku = :item_sku;"),
+                                    {
+                                        'cart_id': cart_id,
+                                        'item_sku': item_sku
+                                    })
+        row = result.fetchone()
+        if row:
+            # row exists, update quantity
+            new_quant = cart_item + row[2]
+            connection.execute(sqlalchemy.text("UPDATE cart_items SET quantity = :quantity WHERE cart_id = :cart_id AND item_sku = :item_sku;"),
+                               {
+                                   'quantity': new_quant,
+                                   'cart_id': cart_id,
+                                   'item_sku': item_sku
+                               })
+        else:
+            # row doesn't exist, insert
+            connection.execute(sqlalchemy.text("INSERT INTO cart_items (cart_id, item_sku, quantity) VALUES (:cart_id, :item_sku, :quantity)"),
+                               {
+                                   'cart_id': cart_id,
+                                   'item_sku': item_sku,
+                                   'quantity': cart_item.quantity
+                               })
 
     return "OK"
 
@@ -111,16 +155,51 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
     """ """
 
     with db.engine.begin() as connection:
+        cart_items = connection.execute(sqlalchemy.text("SELECT * FROM cart_items WHERE cart_id = :cart_id"),
+                                    {
+                                        'cart_id': cart_id
+                                    })
+        income = 0
+        potions_bought = 0
+        for row in cart_items:
+            sku = row[1]
+            quant_bought = row[2]
+            potion = connection.execute(sqlalchemy.text("SELECT quantity, price FROM potion_inventory where sku = :sku"),
+                                        {
+                                            'sku': sku
+                                        })
+            potion = potion.fetchone()
+            num_potions_held = potion[0]
+            price_for_potion = potion[1]
+            income += price_for_potion * quant_bought
+            potions_bought += quant_bought
+
+            # update number of potions in inventory
+            connection.execute(sqlalchemy.text("UPDATE potion_inventory SET quantity = :quantity WHERE sku = :sku"),
+                               {
+                                   'quantity': num_potions_held - quant_bought,
+                                   'sku': sku
+                               })
+
+        # update gold with income
         result = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
-        green = result.fetchone()
-        num_potions = green[2]
-        gold = green[4]
-        id = 1 # hard coded because right now we only have one row... change when more complex
+        globe = result.fetchone()
+        gold = globe[1]
         connection.execute(sqlalchemy.text(""" 
                                     UPDATE global_inventory
-                                    SET num_green_potions = :potions, gold = :gold
-                                    WHERE id = :id;
+                                    SET gold = :gold
+                                    WHERE id = 1;
                                     """),
-                                    {'potions': num_potions - 1, 'gold': gold + 50, 'id': id})
+                                    {'gold': gold + income})
+        
+        # delete the cart from carts and cart_items
+        connection.execute(sqlalchemy.text("DELETE FROM carts where id = :cart_id"),
+                           {
+                               'cart_id': cart_id
+                           })
+        connection.execute(sqlalchemy.text("DELETE FROM cart_items where cart_id = :cart_id"),
+                           {
+                               'cart_id': cart_id
+                           })
 
-    return {"total_potions_bought": 1, "total_gold_paid": 50}
+    return {"total_potions_bought": quant_bought, "total_gold_paid": income}
