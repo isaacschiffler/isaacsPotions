@@ -108,7 +108,7 @@ def create_cart(new_cart: Customer):
 
         print("New cart: " + str(id) + " " + new_cart.customer_name + " " + new_cart.character_class + " " + str(new_cart.level))
 
-    return {"cart_id": str(id)}
+    return {"cart_id": id} # trying to return cart_id as an int instead to hopefully resolve an error?
 
 
 class CartItem(BaseModel):
