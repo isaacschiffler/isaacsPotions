@@ -70,7 +70,8 @@ def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
 @router.post("/plan")
 def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     """Basic Logic: try to buy a barrel for the color potion mat we have least of. If none are affordable, try to buy a different color.
-    Also, buy based on best value after color is selected."""
+    Also, buy based on best value after color is selected.
+    Turns out this is pretty dumb because bottler is called all the time so we usually have 0 of every barrel... maybe better when we have more gold???"""
     print(wholesale_catalog)
 
     what_i_want = []
