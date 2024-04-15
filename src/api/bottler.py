@@ -17,6 +17,7 @@ class PotionInventory(BaseModel):
     quantity: int
 
 
+# naming conventions for potion recipes that we utilize
 potion_names = {
     (100, 0, 0, 0): "red potion",
     (0, 100, 0, 0): "green potion",
@@ -31,7 +32,7 @@ potion_names = {
     (0, 0, 0, 100): "dark potion"
 }
 
-
+# this functions updates quant of potions we have in inventory when deliveries occur
 def update_potions(type, quantity, connection):
     tuple_type = tuple(type)
     name = potion_names[tuple_type]
@@ -41,7 +42,7 @@ def update_potions(type, quantity, connection):
     result = connection.execute(sqlalchemy.text("SELECT * FROM potion_inventory WHERE sku = :sku LIMIT 1;"), 
                                 {'sku': sku})
     row = result.fetchone()
-    # check for existence!
+    # check for existence in case we are making a new potion recipe we haven't before and its not in the database
     if not row:
         # insert
         price = type[0] * .5 + type[1] * .5 + type[2] * .6 + type[3] * .7 # basic price assignment just based on quantity of each potion color included...
