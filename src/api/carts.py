@@ -92,21 +92,33 @@ def create_cart(new_cart: Customer):
     # aka, will a customer call create_cart if they already have a cart?
     #      if so, make sure to check for existence before inserting a new on in!
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text("INSERT INTO carts (name, class, level) VALUES (:name, :class, :level);"),
-                                    {
+        # first check to see if customer already has a cart
+        check = connection.execute(sqlalchemy.text("SELECT id FROM carts WHERE name = :name AND class = :class AND level = :level;"),
+                                   {
                                         'name': new_cart.customer_name,
                                         'class': new_cart.character_class,
                                         'level': new_cart.level
-                                    })
-        result = connection.execute(sqlalchemy.text("SELECT id FROM carts WHERE name = :name AND class = :class AND level = :level;"),
-                                    {
-                                        'name': new_cart.customer_name,
-                                        'class': new_cart.character_class,
-                                        'level': new_cart.level
-                                    })
-        id = result.fetchone()[0]
+                                   })
+        exist = check.fetchone()
+        
+        if not exist:
+            result = connection.execute(sqlalchemy.text("INSERT INTO carts (name, class, level) VALUES (:name, :class, :level);"),
+                                        {
+                                            'name': new_cart.customer_name,
+                                            'class': new_cart.character_class,
+                                            'level': new_cart.level
+                                        })
+            result = connection.execute(sqlalchemy.text("SELECT id FROM carts WHERE name = :name AND class = :class AND level = :level;"),
+                                        {
+                                            'name': new_cart.customer_name,
+                                            'class': new_cart.character_class,
+                                            'level': new_cart.level
+                                        })
+            id = result.fetchone()[0]
+        else:
+            id = exist[0]
 
-        print("New cart: " + str(id) + " " + new_cart.customer_name + " " + new_cart.character_class + " " + str(new_cart.level))
+        print("Cart: " + str(id) + " " + new_cart.customer_name + " " + new_cart.character_class + " " + str(new_cart.level))
 
     return {"cart_id": id} # trying to return cart_id as an int instead to hopefully resolve an error?
 
