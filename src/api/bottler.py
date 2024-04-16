@@ -17,6 +17,7 @@ class PotionInventory(BaseModel):
     quantity: int
 
 
+# naming conventions for potion recipes that we utilize
 potion_names = {
     (100, 0, 0, 0): "red potion",
     (0, 100, 0, 0): "green potion",
@@ -24,10 +25,14 @@ potion_names = {
     (0, 0, 0, 100): "dark potion",
     (33, 33, 34, 0): "even split b",
     (34, 33, 33, 0): "even split r",
-    (33, 34, 33, 0): "even split g"
+    (33, 34, 33, 0): "even split g",
+    (50, 0, 50, 0): "purple potion",
+    (50, 50, 0, 0): "yellow potion",
+    (0, 50, 50, 0): "teal potion",
+    (0, 0, 0, 100): "dark potion"
 }
 
-
+# this functions updates quant of potions we have in inventory when deliveries occur
 def update_potions(type, quantity, connection):
     tuple_type = tuple(type)
     name = potion_names[tuple_type]
@@ -37,9 +42,10 @@ def update_potions(type, quantity, connection):
     result = connection.execute(sqlalchemy.text("SELECT * FROM potion_inventory WHERE sku = :sku LIMIT 1;"), 
                                 {'sku': sku})
     row = result.fetchone()
-    # check for existence!
+    # check for existence in case we are making a new potion recipe we haven't before and its not in the database
     if not row:
         # insert
+        price = type[0] * .5 + type[1] * .5 + type[2] * .6 + type[3] * .7 # basic price assignment just based on quantity of each potion color included...
         connection.execute(sqlalchemy.text("INSERT INTO potion_inventory (sku, r, g, b, d, quantity, name, price) VALUES (:sku, :r, :g, :b, :d, :quant, :name, :price);"), 
                            {'sku': sku,
                             'r': type[0],
@@ -48,7 +54,7 @@ def update_potions(type, quantity, connection):
                             'd': type[3],
                             'quant': quantity,
                             'name': name,
-                            'price': 50 # hard coded for now but eventually make it vary...
+                            'price': price
                             })
         print("inserting potion type: " + str(type))
     else:
@@ -89,19 +95,21 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
         red_ml = globe[2]
         green_ml = globe[3]
         blue_ml = globe[4]
+        dark_ml = globe[5]
 
         # subtract potion mats used
         green_ml -= green_quant
         red_ml -= red_quant
         blue_ml -= blue_quant
+        dark_ml -= dark_quant
 
         # update ml in database
         connection.execute(sqlalchemy.text("""
                                     UPDATE global_inventory
-                                    SET num_green_ml = :green, num_red_ml = :red, num_blue_ml = :blue
+                                    SET num_green_ml = :green, num_red_ml = :red, num_blue_ml = :blue, num_dark_ml = :dark
                                     WHERE id = 1;
                                     """),
-                                    {'green': green_ml, 'red': red_ml, 'blue': blue_ml})
+                                    {'green': green_ml, 'red': red_ml, 'blue': blue_ml, 'dark': dark_ml})
 
 
     return "OK"
@@ -118,39 +126,53 @@ def get_bottle_plan():
     # green potion to add.
     # Expressed in integers from 1 to 100 that must sum up to 100.
 
-    # Initial logic: bottle all barrels into green potions.
-
-    bottle_plan = []
-
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
         globe = result.fetchone()
         red_ml = globe[2]
         green_ml = globe[3]
         blue_ml = globe[4]
-        green_quant = green_ml // 100 #calculate how many potions of 100 ml of green we can make (floor function)
-        red_quant = red_ml // 100
-        blue_quant = blue_ml // 100
+        dark_ml = globe[5]
+
+        potion_inventory = connection.execute(sqlalchemy.text("SELECT * FROM potion_inventory ORDER BY quantity ASC;"))
 
     # current logic is to just make solid color potions
-    if green_quant > 0:
-        bottle_plan.append({
-                "potion_type": [0, 100, 0, 0],
-                "quantity": green_quant,
-        })
-    if red_quant > 0:
-        bottle_plan.append({
-                "potion_type": [100, 0, 0, 0],
-                "quantity": red_quant,
-        })
-    if blue_quant > 0:
-        bottle_plan.append({
-                "potion_type": [0, 0, 100, 0],
-                "quantity": blue_quant,
-        })
+    bottle_plan = make_bottles(red_ml, green_ml, blue_ml, dark_ml, potion_inventory)
 
     print(bottle_plan) # for debugging
         
+    return bottle_plan
+
+
+
+"""Initial thoughts: We should probably try to have a large array of potions
+available, and have a decent stock of basic pure potions, also a decent stock 
+of high profit yielding potions and high purchase potions..."""
+# potion_stock is a sql query result that returns all potions sorted by least quantity in stock
+# red, green, blue, dark is the ml quantities we have in our global inventory for each respective color
+def make_bottles(red, green, blue, dark, potion_stock):
+    # to start lets just make a potion with proportions based on what we have lowest stock of and can make given ml stock
+    bottle_plan = []
+    total_ml = red + green + blue + dark
+    for row in potion_stock:
+        if total_ml < 100:
+            # get out if we don't even have 100 ml of potion
+            break
+        # try to make the current potion
+        potion_type = [row[1], row[2], row[3], row[4]]
+        quant_wanted = 0
+        # make up to 3 potions as possible
+        while red >= potion_type[0] and green >= potion_type[1] and blue >= potion_type[2] and dark >= potion_type[3] and quant_wanted < 3:
+            quant_wanted += 1
+            red -= potion_type[0]
+            green -= potion_type[1]
+            blue -= potion_type[2]
+            dark -= potion_type[3]
+        if quant_wanted > 0:
+            bottle_plan.append({
+                "potion_type": potion_type,
+                "quantity": quant_wanted
+            })
 
     return bottle_plan
 

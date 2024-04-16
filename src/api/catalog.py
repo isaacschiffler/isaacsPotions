@@ -14,9 +14,9 @@ def get_catalog():
     my_catalog = []
 
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text("SELECT * FROM potion_inventory WHERE quantity > 0 ORDER BY quantity DESC;"))
+        # get all potions we have in stock
+        result = connection.execute(sqlalchemy.text("SELECT * FROM potion_inventory WHERE quantity > 0;"))
         for row in result:
-            # for now just offer whatever potion i have most of
             print("Adding to catalog: " + str(row))
             sku = row[0]
             type = [row[1], row[2], row[3], row[4]]
@@ -24,7 +24,7 @@ def get_catalog():
             name = row[6]
             price = row[7]
             print("Number of " + str(type) + " potions offered: " + str(quantity))
-            if quantity > 0: # should be unecessary but fail-safe
+            if quantity > 0: # should be unecessary because of our query params but fail-safe
                 my_catalog.append({
                     "sku": sku,
                     "name": name,
@@ -34,6 +34,5 @@ def get_catalog():
                 })
 
     print(my_catalog) # for debugging
-
 
     return my_catalog
