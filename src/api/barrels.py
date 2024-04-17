@@ -70,7 +70,9 @@ def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
                                          'red': new_red + num_red_ml, 
                                          'blue': new_blue + num_blue_ml,
                                          'dark': new_dark + num_dark_ml})
-    
+        
+    print(f"DELIVERY - gold paid: {cost} red_ml: {new_red} green_ml: {new_green} blue_ml: {new_blue} dark_ml: {new_dark}")
+
     return "OK"
 
 # Gets called once a day

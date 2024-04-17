@@ -102,18 +102,18 @@ def create_cart(new_cart: Customer):
         exist = check.fetchone()
         
         if not exist:
-            result = connection.execute(sqlalchemy.text("INSERT INTO carts (name, class, level) VALUES (:name, :class, :level);"),
+            result = connection.execute(sqlalchemy.text("INSERT INTO carts (name, class, level) VALUES (:name, :class, :level) returning id;"),
                                         {
                                             'name': new_cart.customer_name,
                                             'class': new_cart.character_class,
                                             'level': new_cart.level
                                         })
-            result = connection.execute(sqlalchemy.text("SELECT id FROM carts WHERE name = :name AND class = :class AND level = :level;"),
-                                        {
-                                            'name': new_cart.customer_name,
-                                            'class': new_cart.character_class,
-                                            'level': new_cart.level
-                                        })
+            # result = connection.execute(sqlalchemy.text("SELECT id FROM carts WHERE name = :name AND class = :class AND level = :level;"),
+            #                             {
+            #                                 'name': new_cart.customer_name,
+            #                                 'class': new_cart.character_class,
+            #                                 'level': new_cart.level
+            #                             })
             id = result.fetchone()[0]
         else:
             id = exist[0]
