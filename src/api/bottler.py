@@ -60,7 +60,7 @@ def update_potions(type, quantity, connection):
     else:
         # update
         print("Current potion updating: " + str(row))
-        current_quant = row[5]
+        current_quant = row.quantity
         connection.execute(sqlalchemy.text("""
                                     UPDATE potion_inventory
                                     SET quantity = :quant
@@ -93,10 +93,10 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
 
         g_inventory = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
         globe = g_inventory.fetchone()
-        red_ml = globe[2]
-        green_ml = globe[3]
-        blue_ml = globe[4]
-        dark_ml = globe[5]
+        red_ml = globe.num_red_ml
+        green_ml = globe.num_green_ml
+        blue_ml = globe.num_blue_ml
+        dark_ml = globe.num_dark_ml
 
         # subtract potion mats used
         green_ml -= green_quant
@@ -130,10 +130,10 @@ def get_bottle_plan():
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
         globe = result.fetchone()
-        red_ml = globe[2]
-        green_ml = globe[3]
-        blue_ml = globe[4]
-        dark_ml = globe[5]
+        red_ml = globe.num_red_ml
+        green_ml = globe.num_green_ml
+        blue_ml = globe.num_blue_ml
+        dark_ml = globe.num_dark_ml
 
         potion_inventory = connection.execute(sqlalchemy.text("SELECT * FROM potion_inventory ORDER BY quantity ASC;"))
 
@@ -160,7 +160,7 @@ def make_bottles(red, green, blue, dark, potion_stock):
             # get out if we don't even have 100 ml of potion
             break
         # try to make the current potion
-        potion_type = [row[1], row[2], row[3], row[4]]
+        potion_type = [row.r, row.g, row.b, row.d]
         quant_wanted = 0
         # make up to 3 potions as possible
         while red >= potion_type[0] and green >= potion_type[1] and blue >= potion_type[2] and dark >= potion_type[3] and quant_wanted < 3:

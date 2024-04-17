@@ -18,11 +18,11 @@ def get_catalog():
         result = connection.execute(sqlalchemy.text("SELECT * FROM potion_inventory WHERE quantity > 0;"))
         for row in result:
             print("Adding to catalog: " + str(row))
-            sku = row[0]
-            type = [row[1], row[2], row[3], row[4]]
-            quantity = row[5]
-            name = row[6]
-            price = row[7]
+            sku = row.sku
+            type = [row.r, row.g, row.b, row.d]
+            quantity = row.quantity
+            name = row.name
+            price = row.price
             print("Number of " + str(type) + " potions offered: " + str(quantity))
             if quantity > 0: # should be unecessary because of our query params but fail-safe
                 my_catalog.append({

@@ -9,6 +9,8 @@ create table
     constraint global_inventory_pkey primary key (id)
   ) tablespace pg_default;
 
+INSERT INTO global_inventory (gold, num_red_ml, num_green_ml, num_blue_ml, num_dark_ml) VALUES (100, 0, 0, 0, 0);
+
 create table
   public.potion_inventory (
     sku text not null,

@@ -30,12 +30,12 @@ def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
         globe = result.fetchone()
-        print("Current database status: " + str(globe[1]) + " " + str(globe[2]) + " " + str(globe[3])) #for debugging
-        gold = globe[1]
-        num_red_ml = globe[2]
-        num_green_ml = globe[3]
-        num_blue_ml = globe[4]
-        num_dark_ml = globe[5]
+        print(f"Current database status:  {str(globe.gold)} {str(globe.num_red_ml)}  {str(globe.num_green_ml)} {str(globe.num_blue_ml)} {str(globe.num_dark_ml)}") #for debugging
+        gold = globe.gold
+        num_red_ml = globe.num_red_ml
+        num_green_ml = globe.num_green_ml
+        num_blue_ml = globe.num_blue_ml
+        num_dark_ml = globe.num_dark_ml
         new_green = 0
         new_red = 0
         new_blue = 0
@@ -86,8 +86,8 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     with db.engine.begin() as connection:
         g_inventory = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
         globe = g_inventory.fetchone()
-        print("Current database status: " + str(globe[1]) + " " + str(globe[2]) + " " + str(globe[3]) + " " + str(globe[4]) + " " + str(globe[5]))
-        gold = globe[1]
+        print(f"Current database status: {str(globe.gold)} {str(globe.num_red_ml)} {str(globe.num_green_ml)} {str(globe.num_blue_ml)} {str(globe.num_dark_ml)}")
+        gold = globe.gold
 
         # get catalog offerings for each color barrel
         red_offers = [x for x in wholesale_catalog if x.potion_type == [1, 0, 0, 0]]

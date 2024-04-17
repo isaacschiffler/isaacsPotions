@@ -108,15 +108,9 @@ def create_cart(new_cart: Customer):
                                             'class': new_cart.character_class,
                                             'level': new_cart.level
                                         })
-            # result = connection.execute(sqlalchemy.text("SELECT id FROM carts WHERE name = :name AND class = :class AND level = :level;"),
-            #                             {
-            #                                 'name': new_cart.customer_name,
-            #                                 'class': new_cart.character_class,
-            #                                 'level': new_cart.level
-            #                             })
             id = result.fetchone()[0]
         else:
-            id = exist[0]
+            id = exist.id
 
         print("Cart: " + str(id) + " " + new_cart.customer_name + " " + new_cart.character_class + " " + str(new_cart.level))
 
@@ -139,7 +133,7 @@ def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
         row = result.fetchone()
         if row:
             # row exists, update quantity
-            new_quant = cart_item + row[2]
+            new_quant = cart_item + row.quantity
             connection.execute(sqlalchemy.text("UPDATE cart_items SET quantity = :quantity WHERE cart_id = :cart_id AND item_sku = :item_sku;"),
                                {
                                    'quantity': new_quant,
@@ -174,15 +168,15 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
         income = 0
         potions_bought = 0
         for row in cart_items:
-            sku = row[1]
-            quant_bought = row[2]
+            sku = row.item_sku
+            quant_bought = row.quantity
             potion = connection.execute(sqlalchemy.text("SELECT quantity, price FROM potion_inventory where sku = :sku"),
                                         {
                                             'sku': sku
                                         })
             potion = potion.fetchone()
-            num_potions_held = potion[0]
-            price_for_potion = potion[1]
+            num_potions_held = potion.quantity
+            price_for_potion = potion.price
             income += price_for_potion * quant_bought
             potions_bought += quant_bought
 
@@ -196,7 +190,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
         # update gold with income
         result = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
         globe = result.fetchone()
-        gold = globe[1]
+        gold = globe.gold
         connection.execute(sqlalchemy.text(""" 
                                     UPDATE global_inventory
                                     SET gold = :gold
