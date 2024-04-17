@@ -67,7 +67,8 @@ def update_potions(type, quantity, connection):
                                     WHERE sku = :sku;
                                     """),
                                     {'quant': quantity + current_quant, 
-                                     'name': name})
+                                     'name': name,
+                                     'sku': sku})
     
 
 @router.post("/deliver/{order_id}")
