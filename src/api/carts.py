@@ -199,11 +199,11 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                                     {'gold': gold + income})
         
         # delete the cart from carts and cart_items
-        connection.execute(sqlalchemy.text("DELETE FROM carts where id = :cart_id"),
-                           {
-                               'cart_id': cart_id
-                           })
         connection.execute(sqlalchemy.text("DELETE FROM cart_items where cart_id = :cart_id"),
+                           {
+                                'cart_id': cart_id
+                            })
+        connection.execute(sqlalchemy.text("DELETE FROM carts where id = :cart_id"),
                            {
                                'cart_id': cart_id
                            })
