@@ -15,7 +15,7 @@ def get_catalog():
 
     with db.engine.begin() as connection:
         # get all potions we have in stock
-        result = connection.execute(sqlalchemy.text("SELECT * FROM potion_inventory WHERE quantity > 0;"))
+        result = connection.execute(sqlalchemy.text("SELECT * FROM potion_inventory WHERE quantity > 0 ORDER BY quantity DESC;"))
         for row in result:
             print("Adding to catalog: " + str(row))
             sku = row.sku
@@ -32,6 +32,8 @@ def get_catalog():
                     "price": price,
                     "potion_type": type,
                 })
+            if len(my_catalog) >= 6:
+                break
 
     print(my_catalog) # for debugging
 

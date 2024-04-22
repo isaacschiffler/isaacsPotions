@@ -144,6 +144,7 @@ def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
             connection.rollback()
             print("entry already in; customer updating quantity")
     if not inserted:
+        # this should theoretically never need to happen unless network error...
         with db.engine.begin() as connection:
             result = connection.execute(sqlalchemy.text("""UPDATE cart_items 
                                                 SET quantity = cart_items.quantity + :quantity 
@@ -172,7 +173,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
     """ """
 
     with db.engine.begin() as connection:
-        # update potion quantity levels
+        # update potion quantity
         quant_bought = connection.execute(sqlalchemy.text("""
                                         UPDATE potion_inventory 
                                         SET quantity = potion_inventory.quantity - cart_items.quantity
