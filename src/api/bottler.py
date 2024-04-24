@@ -151,13 +151,8 @@ def get_bottle_plan():
     """
     Go from barrel to bottle.
 
-    Basic logic for now: Make as many solid color potions as possible
+    Basic logic for now: Make up to 3 additional potions starting from least stocked
     """
-
-    # Each bottle has a quantity of what proportion of red, blue, and
-    # green potion to add.
-    # Expressed in integers from 1 to 100 that must sum up to 100.
-
     with db.engine.begin() as connection:
         globe = connection.execute(sqlalchemy.text("SELECT * FROM globe")).fetchone()
         red_ml = globe.red_ml
@@ -169,7 +164,6 @@ def get_bottle_plan():
         potion_count = connection.execute(sqlalchemy.text("SELECT SUM(quantity) FROM potions")).fetchone()[0]
         capacity = connection.execute(sqlalchemy.text("SELECT potion_capacity FROM globe")).fetchone()[0]
 
-        # current logic is to just make solid color potions
         bottle_plan = make_bottles(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, capacity, potion_count)
 
     print(bottle_plan) # for debugging
@@ -186,11 +180,7 @@ of high profit yielding potions and high purchase potions..."""
 def make_bottles(red, green, blue, dark, potion_stock, capacity, potion_count):
     # to start lets just make a potion with proportions based on what we have lowest stock of and can make given ml stock
     bottle_plan = []
-    total_ml = red + green + blue + dark
     for row in potion_stock:
-        if total_ml < 100:
-            # get out if we don't even have 100 ml of potion
-            break
         # try to make the current potion
         potion_type = row.type
         quant_wanted = 0
