@@ -166,21 +166,11 @@ def get_bottle_plan():
         dark_ml = globe.dark_ml
 
         potion_inventory = connection.execute(sqlalchemy.text("SELECT * FROM potions ORDER BY quantity ASC;")).fetchall()
+        potion_count = connection.execute(sqlalchemy.text("SELECT SUM(quantity) FROM potions")).fetchone()[0]
+        capacity = connection.execute(sqlalchemy.text("SELECT potion_capacity FROM globe")).fetchone()[0]
 
-        # # create a potion_order
-        # id = connection.execute(sqlalchemy.text("""INSERT INTO potion_orders returning id;""")).fetchone().id
-
-        # potion_ids = []
         # current logic is to just make solid color potions
-        bottle_plan = make_bottles(red_ml, green_ml, blue_ml, dark_ml, potion_inventory)
-        
-        # # finish this!!!!!!
-        # connection.execute(sqlalchemy.text("""INSERT INTO potion_order_items
-        #                                    (potion_id, order_id, quantity) VALUES
-        #                                    (:potion_id, :order_id, :quantity)"""),
-        #                                    potion_ids)
-
-
+        bottle_plan = make_bottles(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, capacity, potion_count)
 
     print(bottle_plan) # for debugging
         
@@ -193,7 +183,7 @@ available, and have a decent stock of basic pure potions, also a decent stock
 of high profit yielding potions and high purchase potions..."""
 # potion_stock is a sql query result that returns all potions sorted by least quantity in stock
 # red, green, blue, dark is the ml quantities we have in our global inventory for each respective color
-def make_bottles(red, green, blue, dark, potion_stock):
+def make_bottles(red, green, blue, dark, potion_stock, capacity, potion_count):
     # to start lets just make a potion with proportions based on what we have lowest stock of and can make given ml stock
     bottle_plan = []
     total_ml = red + green + blue + dark
@@ -211,11 +201,12 @@ def make_bottles(red, green, blue, dark, potion_stock):
             green -= potion_type[1]
             blue -= potion_type[2]
             dark -= potion_type[3]
-        if quant_wanted > 0:
+        if quant_wanted > 0 and potion_count + quant_wanted <= capacity:
             bottle_plan.append({
                 "potion_type": potion_type,
                 "quantity": quant_wanted
             })
+            potion_count += quant_wanted
 
     return bottle_plan
 
