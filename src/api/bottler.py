@@ -86,29 +86,62 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
         dark_quant += i.potion_type[3] * i.quantity
 
     with db.engine.begin() as connection:
-        for i in potions_delivered:
-            update_potions(i.potion_type, i.quantity, connection)
+        # for i in potions_delivered:
+        #     update_potions(i.potion_type, i.quantity, connection)
 
-        g_inventory = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
-        globe = g_inventory.fetchone()
-        red_ml = globe.num_red_ml
-        green_ml = globe.num_green_ml
-        blue_ml = globe.num_blue_ml
-        dark_ml = globe.num_dark_ml
+        # g_inventory = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
+        # globe = g_inventory.fetchone()
+        # red_ml = globe.num_red_ml
+        # green_ml = globe.num_green_ml
+        # blue_ml = globe.num_blue_ml
+        # dark_ml = globe.num_dark_ml
 
-        # subtract potion mats used
-        green_ml -= green_quant
-        red_ml -= red_quant
-        blue_ml -= blue_quant
-        dark_ml -= dark_quant
+        # # subtract potion mats used
+        # green_ml -= green_quant
+        # red_ml -= red_quant
+        # blue_ml -= blue_quant
+        # dark_ml -= dark_quant
 
         # update ml in database
-        connection.execute(sqlalchemy.text("""
-                                    UPDATE global_inventory
-                                    SET num_green_ml = :green, num_red_ml = :red, num_blue_ml = :blue, num_dark_ml = :dark
-                                    WHERE id = 1;
-                                    """),
-                                    {'green': green_ml, 'red': red_ml, 'blue': blue_ml, 'dark': dark_ml})
+        # connection.execute(sqlalchemy.text("""
+        #                             UPDATE global_inventory
+        #                             SET num_green_ml = :green, num_red_ml = :red, num_blue_ml = :blue, num_dark_ml = :dark
+        #                             WHERE id = 1;
+        #                             """),
+        #                             {'green': green_ml, 'red': red_ml, 'blue': blue_ml, 'dark': dark_ml})
+        
+        # insert into processed table
+        trans_id = connection.execute(sqlalchemy.text("""INSERT INTO processed
+                                                (job_id, type) VALUES
+                                                (:job_id, 'potion_brew') returning id;"""),
+                                                [{
+                                                    'job_id': order_id
+                                                }]).fetchone()[0]
+        
+        # insert into barrel_ledger
+        connection.execute(sqlalchemy.text("""INSERT INTO barrel_ledger
+                                           (red_ml, green_ml, blue_ml, dark_ml, trans_id) VALUES
+                                           (:red_ml, :green_ml, :blue_ml, :dark_ml, :trans_id)"""),
+                                           [{
+                                               'red_ml': -red_quant,
+                                               'green_ml': -green_quant,
+                                               'blue_ml': -blue_quant,
+                                               'dark_ml': -dark_quant,
+                                               'trans_id': trans_id
+                                           }])
+        
+        for i in potions_delivered:
+            # insert each potion brewed into potion_ledger
+            connection.execute(sqlalchemy.text("""INSERT INTO potion_ledger
+                                               (potion_id, trans_id, quantity) 
+                                               SELECT id, :trans_id, :quantity
+                                               FROM potion_types
+                                               WHERE type = :type;"""),
+                                               [{
+                                                   'trans_id': trans_id,
+                                                   'quantity': i.quantity,
+                                                   'type': i.potion_type
+                                               }])
 
 
     return "OK"
@@ -126,17 +159,28 @@ def get_bottle_plan():
     # Expressed in integers from 1 to 100 that must sum up to 100.
 
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
-        globe = result.fetchone()
-        red_ml = globe.num_red_ml
-        green_ml = globe.num_green_ml
-        blue_ml = globe.num_blue_ml
-        dark_ml = globe.num_dark_ml
+        globe = connection.execute(sqlalchemy.text("SELECT * FROM globe")).fetchone()
+        red_ml = globe.red_ml
+        green_ml = globe.green_ml
+        blue_ml = globe.blue_ml
+        dark_ml = globe.dark_ml
 
-        potion_inventory = connection.execute(sqlalchemy.text("SELECT * FROM potion_inventory ORDER BY quantity ASC;"))
+        potion_inventory = connection.execute(sqlalchemy.text("SELECT * FROM potions ORDER BY quantity ASC;")).fetchall()
 
-    # current logic is to just make solid color potions
-    bottle_plan = make_bottles(red_ml, green_ml, blue_ml, dark_ml, potion_inventory)
+        # # create a potion_order
+        # id = connection.execute(sqlalchemy.text("""INSERT INTO potion_orders returning id;""")).fetchone().id
+
+        # potion_ids = []
+        # current logic is to just make solid color potions
+        bottle_plan = make_bottles(red_ml, green_ml, blue_ml, dark_ml, potion_inventory)
+        
+        # # finish this!!!!!!
+        # connection.execute(sqlalchemy.text("""INSERT INTO potion_order_items
+        #                                    (potion_id, order_id, quantity) VALUES
+        #                                    (:potion_id, :order_id, :quantity)"""),
+        #                                    potion_ids)
+
+
 
     print(bottle_plan) # for debugging
         
@@ -158,7 +202,7 @@ def make_bottles(red, green, blue, dark, potion_stock):
             # get out if we don't even have 100 ml of potion
             break
         # try to make the current potion
-        potion_type = [row.r, row.g, row.b, row.d]
+        potion_type = row.type
         quant_wanted = 0
         # make up to 3 potions as possible
         while red >= potion_type[0] and green >= potion_type[1] and blue >= potion_type[2] and dark >= potion_type[3] and quant_wanted < 3:

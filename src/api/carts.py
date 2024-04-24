@@ -88,29 +88,14 @@ def post_visits(visit_id: int, customers: list[Customer]):
 @router.post("/")
 def create_cart(new_cart: Customer):
     """ create a new cart for the given customer """
-    # do carts persist through to customer revisiting?
-    # aka, will a customer call create_cart if they already have a cart?
-    #      if so, make sure to check for existence before inserting a new on in!
     with db.engine.begin() as connection:
-        # first check to see if customer already has a cart
-        check = connection.execute(sqlalchemy.text("SELECT id FROM carts WHERE name = :name AND class = :class AND level = :level;"),
-                                    {
-                                            'name': new_cart.customer_name,
-                                            'class': new_cart.character_class,
-                                            'level': new_cart.level
-                                    })
-        exist = check.fetchone()
         
-        if not exist:
-            result = connection.execute(sqlalchemy.text("INSERT INTO carts (name, class, level) VALUES (:name, :class, :level) returning id;"),
-                                        {
-                                            'name': new_cart.customer_name,
-                                            'class': new_cart.character_class,
-                                            'level': new_cart.level
-                                        })
-            id = result.fetchone()[0]
-        else:
-            id = exist.id
+        id = connection.execute(sqlalchemy.text("INSERT INTO carts (name, class, level) VALUES (:name, :class, :level) returning id;"),
+                                    {
+                                        'name': new_cart.customer_name,
+                                        'class': new_cart.character_class,
+                                        'level': new_cart.level
+                                    }).fetchone()[0]
 
         print("Cart: " + str(id) + " " + new_cart.customer_name + " " + new_cart.character_class + " " + str(new_cart.level))
 
@@ -124,43 +109,20 @@ class CartItem(BaseModel):
 @router.post("/{cart_id}/items/{item_sku}")
 def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
     """ add quantity of items """
-    inserted = False
+    # inserted = False
     with db.engine.begin() as connection:
-        try:
-            # row doesn't exist, insert
-            connection.execute(sqlalchemy.text("""
-                                               INSERT INTO cart_items (cart_id, potion_id, quantity, price) 
-                                               SELECT :cart_id, potion_inventory.id, :quantity, potion_inventory.price
-                                               FROM potion_inventory 
-                                               WHERE potion_inventory.sku = :item_sku"""),
-                               {
-                                   'cart_id': cart_id,
-                                   'quantity': cart_item.quantity,
-                                   'item_sku': item_sku
-                               })
-            print("new entry made")
-            inserted = True
-        except sqlalchemy.exc.IntegrityError:
-            connection.rollback()
-            print("entry already in; customer updating quantity")
-    if not inserted:
-        # this should theoretically never need to happen unless network error...
-        with db.engine.begin() as connection:
-            result = connection.execute(sqlalchemy.text("""UPDATE cart_items 
-                                                SET quantity = cart_items.quantity + :quantity 
-                                                FROM potion_inventory
-                                                WHERE cart_items.cart_id = :cart_id 
-                                                AND cart_items.potion_id = potion_inventory.id 
-                                                AND potion_inventory.sku = :item_sku;
-                                                """),
-                                {
-                                    'quantity': cart_item.quantity,
-                                    'cart_id': cart_id,
-                                    'item_sku': item_sku
-                                })
-            print("updating existing entry")
-            print(result)
-
+        connection.execute(sqlalchemy.text("""
+                                            INSERT INTO cart_items (cart_id, potion_id, quantity, price) 
+                                            SELECT :cart_id, potion_types.id, :quantity, potion_types.price
+                                            FROM potion_types 
+                                            WHERE potion_types.sku = :item_sku"""),
+                            {
+                                'cart_id': cart_id,
+                                'quantity': cart_item.quantity,
+                                'item_sku': item_sku
+                            })
+        print("new entry made in cart " + str(cart_id))
+        
     return "OK"
 
 
@@ -169,47 +131,53 @@ class CartCheckout(BaseModel):
 
 @router.post("/{cart_id}/checkout")
 def checkout(cart_id: int, cart_checkout: CartCheckout):
-    #subtract potions and add gold
-    """ """
+    """Subtract potions and add gold"""
 
     with db.engine.begin() as connection:
-        # update potion quantity
-        quant_bought = connection.execute(sqlalchemy.text("""
-                                        UPDATE potion_inventory 
-                                        SET quantity = potion_inventory.quantity - cart_items.quantity
-                                        FROM cart_items
-                                        WHERE potion_inventory.id = cart_items.potion_id and cart_items.cart_id = :cart_id
-                                        returning cart_items.quantity as quant_bought;
-                                        """), { 'cart_id': cart_id})
-        # update global gold levels
-        income = connection.execute(sqlalchemy.text("""
-                                        UPDATE global_inventory 
-                                        SET gold = global_inventory.gold + (cart_items.quantity * cart_items.price)
-                                        FROM cart_items, potion_inventory
-                                        WHERE potion_inventory.id = cart_items.potion_id and cart_items.cart_id = :cart_id
-                                        returning cart_items.quantity * cart_items.price as income;
-                                        """), { 'cart_id': cart_id})
-        
-        quant_bought = quant_bought.fetchone()
-        income = income.fetchone()
+        # insert into processed
+        trans_id = connection.execute(sqlalchemy.text("""INSERT INTO processed
+                                                     (job_id, type) VALUES
+                                                     (:job_id, 'potion_sale') returning id;
+                                                      """),
+                                                    [{
+                                                        'job_id': cart_id
+                                                    }]).fetchone()[0]
 
-        if quant_bought and income:
-            # no erros in updating
-            quant_bought = quant_bought[0]
-            income = income[0]
-        else:
-            print("error updating...")
+        # update potion_ledger
+        connection.execute(sqlalchemy.text("""INSERT INTO potion_ledger
+                                           (trans_id, quantity, potion_id)
+                                           SELECT :trans_id, -1 * quantity, potion_id
+                                           FROM cart_items
+                                           WHERE cart_items.cart_id = :cart_id;
+                                           """),
+                                           [{
+                                               'trans_id': trans_id,
+                                               'cart_id': cart_id
+                                           }])
         
-        # delete the cart from carts and cart_items
-        connection.execute(sqlalchemy.text("DELETE FROM cart_items where cart_id = :cart_id"),
-                           {
-                                'cart_id': cart_id
-                            })
-        connection.execute(sqlalchemy.text("DELETE FROM carts where id = :cart_id"),
-                           {
-                               'cart_id': cart_id
-                           })
+        # update gold_ledger
+        connection.execute(sqlalchemy.text("""INSERT INTO gold_ledger
+                                           (trans_id, gold)
+                                           SELECT :trans_id, SUM(quantity * price)
+                                           FROM cart_items
+                                           WHERE cart_items.cart_id = :cart_id
+                                           GROUP BY cart_items.cart_id;
+                                           """),
+                                           [{
+                                               'trans_id': trans_id,
+                                               'cart_id': cart_id
+                                           }])
         
+        # get quantity of potions sold
+        quant_bought = connection.execute(sqlalchemy.text("SELECT SUM(quantity) FROM potion_ledger WHERE trans_id = :trans_id"),
+                                          [{
+                                              'trans_id': trans_id
+                                          }])
+        # get gold paid
+        income = connection.execute(sqlalchemy.text("SELECT gold FROM gold_ledger WHERE trans_id = :trans_id"),
+                                    [{
+                                        'trans_id': trans_id
+                                    }]).fetchone()[0]
     
 
     return {"total_potions_bought": quant_bought, "total_gold_paid": income}

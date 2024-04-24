@@ -15,11 +15,16 @@ def get_catalog():
 
     with db.engine.begin() as connection:
         # get all potions we have in stock
-        result = connection.execute(sqlalchemy.text("SELECT * FROM potion_inventory WHERE quantity > 0 ORDER BY quantity DESC;"))
+        result = connection.execute(sqlalchemy.text("""SELECT potion_types.sku, potions.quantity, potion_types.name, potion_types.type, potion_types.price
+                                                    FROM potion_types 
+                                                    JOIN potions ON potion_types.type = potions.type
+                                                    WHERE potions.quantity > 0 
+                                                    ORDER BY quantity DESC;""")).fetchall()
+        
         for row in result:
             print("Adding to catalog: " + str(row))
             sku = row.sku
-            type = [row.r, row.g, row.b, row.d]
+            type = row.type
             quantity = row.quantity
             name = row.name
             price = row.price
