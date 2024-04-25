@@ -69,6 +69,29 @@ def update_potions(type, quantity, connection):
                                      'sku': sku})
     
 
+@router.post("/newRecipe")
+def add_new_recipe(type: list[int], name: str):
+    """ add a new potion recipe to potion_types, don't insert a potion_type that already exists pls... """
+    sku = name.upper()
+    sku = sku.replace(' ', '_')
+    sku += "_0"
+    price = type[0] * .5 + type[1] * .5 + type[2] * .6 + type[3] * .7 # basic price assignment just based on quantity of each potion color included...
+
+    with db.engine.begin() as connection:
+        connection.execute(sqlalchemy.text("""INSERT INTO potion_types
+                                           (sku, name, price, type) VALUES
+                                           (:sku, :name, :price, :type)"""),
+                                           [{
+                                               'sku': sku,
+                                               'name': name,
+                                               'price': price,
+                                               'type': type
+                                           }])
+
+
+    return "New potion created; sku: " + sku
+
+
 @router.post("/deliver/{order_id}")
 def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int):
     #subtract ml and add potions
@@ -154,15 +177,15 @@ def get_bottle_plan():
     Basic logic for now: Make up to 3 additional potions starting from least stocked
     """
     with db.engine.begin() as connection:
-        globe = connection.execute(sqlalchemy.text("SELECT * FROM globe")).fetchone()
+        globe = connection.execute(sqlalchemy.text("SELECT red_ml, green_ml, blue_ml, dark_ml, potion_capacity FROM globe")).fetchone()
         red_ml = globe.red_ml
         green_ml = globe.green_ml
         blue_ml = globe.blue_ml
         dark_ml = globe.dark_ml
+        capacity = globe.potion_capacity
 
-        potion_inventory = connection.execute(sqlalchemy.text("SELECT * FROM potions ORDER BY quantity ASC;")).fetchall()
+        potion_inventory = connection.execute(sqlalchemy.text("SELECT type FROM potions ORDER BY quantity ASC;")).fetchall()
         potion_count = connection.execute(sqlalchemy.text("SELECT SUM(quantity) FROM potions")).fetchone()[0]
-        capacity = connection.execute(sqlalchemy.text("SELECT potion_capacity FROM globe")).fetchone()[0]
 
         bottle_plan = make_bottles(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, capacity, potion_count)
 

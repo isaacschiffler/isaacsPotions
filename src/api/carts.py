@@ -172,7 +172,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
         quant_bought = connection.execute(sqlalchemy.text("SELECT SUM(quantity) FROM potion_ledger WHERE trans_id = :trans_id"),
                                           [{
                                               'trans_id': trans_id
-                                          }]).fetchone()[0]
+                                          }]).fetchone()[0] * -1
         # get gold paid
         income = connection.execute(sqlalchemy.text("SELECT gold FROM gold_ledger WHERE trans_id = :trans_id"),
                                     [{
