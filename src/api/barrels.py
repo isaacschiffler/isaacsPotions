@@ -3,6 +3,13 @@ from pydantic import BaseModel
 from src.api import auth
 import sqlalchemy
 from src import database as db
+import os
+import dotenv
+
+
+# This is just so I can manage what the threshold to buy to is when i'm broke so i don't have to re-push code
+dotenv.load_dotenv()
+part_of_capacity =  int(os.environ.get("PART_OF_CAPACITY"))
 
 
 router = APIRouter(
@@ -153,7 +160,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         dark_ml = 0
         cost = 0
 
-        while red_ml < capacity / 4:
+        while red_ml < capacity / part_of_capacity:
             # try to buy best offer barrel
             bought = False
             for i in red_offers:
@@ -169,7 +176,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
             if bought == False:
                 break
 
-        while green_ml < capacity / 4:
+        while green_ml < capacity / part_of_capacity:
             # try to buy best offer barrel
             bought = False
             for i in green_offers:
@@ -185,7 +192,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
             if bought == False:
                 break
 
-        while blue_ml < capacity / 4:
+        while blue_ml < capacity / part_of_capacity:
             # try to buy best offer barrel
             bought = False
             for i in blue_offers:
@@ -201,7 +208,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
             if bought == False:
                 break
 
-        while dark_ml < capacity / 4:
+        while dark_ml < capacity / part_of_capacity:
             # try to buy best offer barrel
             bought = False
             for i in dark_offers:
