@@ -35,14 +35,6 @@ def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
 
 
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
-        globe = result.fetchone()
-        print(f"Current database status:  {str(globe.gold)} {str(globe.num_red_ml)}  {str(globe.num_green_ml)} {str(globe.num_blue_ml)} {str(globe.num_dark_ml)}") #for debugging
-        gold = globe.gold
-        num_red_ml = globe.num_red_ml
-        num_green_ml = globe.num_green_ml
-        num_blue_ml = globe.num_blue_ml
-        num_dark_ml = globe.num_dark_ml
         new_green = 0
         new_red = 0
         new_blue = 0
@@ -65,20 +57,6 @@ def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
             else: # not green, red, blue, or dark
                 print("potion delivered that is not red, green, blue, or dark.......")
             cost += price * quantity
-            
-
-        # connection.execute(sqlalchemy.text("""
-        #                                 UPDATE global_inventory
-        #                                 SET num_green_ml = :green, gold = :gold, num_red_ml = :red, num_blue_ml = :blue, num_dark_ml = :dark
-        #                                 WHERE id = 1;
-        #                                 """),  
-        #                                 {'green': new_green + num_green_ml, 
-        #                                  'gold': gold - cost, 
-        #                                  'red': new_red + num_red_ml, 
-        #                                  'blue': new_blue + num_blue_ml,
-        #                                  'dark': new_dark + num_dark_ml})
-            
-        
                 
         # add barrel order to processed
         trans_id = connection.execute(sqlalchemy.text("""INSERT INTO processed
@@ -126,13 +104,14 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         # get global inventory info from the ledgers through the globe view
         globe = connection.execute(sqlalchemy.text("SELECT * from globe")).fetchone()
 
-        # out-dated code????
-        # g_inventory = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
-        # globe = g_inventory.fetchone()
         print(f"Current database status: {str(globe.gold)} {str(globe.red_ml)} {str(globe.green_ml)} {str(globe.blue_ml)} {str(globe.dark_ml)}")
         gold = globe.gold
         capacity = globe.ml_capacity
-        ml_count = globe.red_ml + globe.green_ml + globe.blue_ml + globe.dark_ml
+        red_ml = globe.red_ml
+        green_ml = globe.green_ml
+        blue_ml = globe.blue_ml
+        dark_ml = globe.dark_ml
+        ml_count = red_ml + green_ml + blue_ml + dark_ml
 
         # get catalog offerings for each color barrel
         red_offers = [x for x in wholesale_catalog if x.potion_type == [1, 0, 0, 0]]
@@ -154,10 +133,6 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
 
         barrels_bought = 0
 
-        red_ml = 0
-        green_ml = 0
-        blue_ml = 0
-        dark_ml = 0
         cost = 0
 
         while red_ml < capacity / part_of_capacity:
@@ -223,49 +198,6 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                     break
             if bought == False:
                 break
-        # # basically cycle through the catalog and buy the best deal for each color if 
-        # # i can afford it until i don't have enough gold for anything or i bought all barrels
-        # # MAKE THIS MORE EFFICIENT!!!!!!!!!-------------------------------------------------------------------------------
-        # while gold >= min_price and min_price != -1 and barrels_bought < total_barrels_offered and ml_count < capacity:
-        #     # try to buy one red barrel
-        #     for i in red_offers:
-        #         if try_to_buy(i, gold, what_i_want, ml_count, capacity) == True:
-        #             gold -= i.price
-        #             barrels_bought += 1
-
-        #             red_ml += i.ml_per_barrel
-        #             cost += i.price
-        #             break
-            
-        #     # try to buy one green barrel
-        #     for i in green_offers:
-        #         if try_to_buy(i, gold, what_i_want, ml_count, capacity) == True:
-        #             gold -= i.price
-        #             barrels_bought += 1
-
-        #             green_ml += i.ml_per_barrel
-        #             cost += i.price
-        #             break
-
-        #     # try to buy one blue barrel
-        #     for i in blue_offers:
-        #         if try_to_buy(i, gold, what_i_want, ml_count, capacity) == True:
-        #             gold -= i.price
-        #             barrels_bought += 1
-
-        #             blue_ml += i.ml_per_barrel
-        #             cost += i.price
-        #             break
-
-        #     # try to buy one dark barrel
-        #     for i in dark_offers:
-        #         if try_to_buy(i, gold, what_i_want, ml_count, capacity) == True:
-        #             gold -= i.price
-        #             barrels_bought += 1
-
-        #             dark_ml += i.ml_per_barrel
-        #             cost += i.price
-        #             break
 
     print(what_i_want) #for debugging
 
