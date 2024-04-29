@@ -61,6 +61,7 @@ def deliver_capacity_plan(capacity_purchase : CapacityPurchase, order_id: int):
     """
     mls = capacity_purchase.ml_capacity * 10000
     potions = capacity_purchase.potion_capacity * 50
+    gold = capacity_purchase.ml_capacity + capacity_purchase.potion_capacity
     with db.engine.begin() as connection:
         # add to processed
         trans_id = connection.execute(sqlalchemy.text("""INSERT INTO processed
@@ -78,6 +79,16 @@ def deliver_capacity_plan(capacity_purchase : CapacityPurchase, order_id: int):
                                                'trans_id': trans_id,
                                                'mls': mls,
                                                'potions': potions
+                                           }])
+        
+        # add order to gold_ledger
+        connection.execute(sqlalchemy.text("""INSERT INTO gold_ledger
+                                           (trans_id, gold) VALUES
+                                           (:trans_id, :cost);
+                                           """), 
+                                           [{
+                                               'trans_id': trans_id,
+                                               'cost': -gold
                                            }])
 
     return "OK"

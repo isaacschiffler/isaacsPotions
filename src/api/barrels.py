@@ -135,6 +135,22 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
 
         cost = 0
 
+        while dark_ml < capacity / part_of_capacity:
+            # try to buy best offer barrel
+            bought = False
+            for i in dark_offers:
+                if try_to_buy(i, gold, what_i_want, ml_count, capacity) == True:
+                    gold -= i.price
+                    barrels_bought += 1
+
+                    dark_ml += i.ml_per_barrel
+                    ml_count += i.ml_per_barrel
+                    cost += i.price
+                    bought = True
+                    break
+            if bought == False:
+                break
+            
         while red_ml < capacity / part_of_capacity:
             # try to buy best offer barrel
             bought = False
@@ -183,21 +199,6 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
             if bought == False:
                 break
 
-        while dark_ml < capacity / part_of_capacity:
-            # try to buy best offer barrel
-            bought = False
-            for i in dark_offers:
-                if try_to_buy(i, gold, what_i_want, ml_count, capacity) == True:
-                    gold -= i.price
-                    barrels_bought += 1
-
-                    dark_ml += i.ml_per_barrel
-                    ml_count += i.ml_per_barrel
-                    cost += i.price
-                    bought = True
-                    break
-            if bought == False:
-                break
 
     print(what_i_want) #for debugging
 

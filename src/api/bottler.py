@@ -108,31 +108,7 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
         blue_quant += i.potion_type[2] * i.quantity
         dark_quant += i.potion_type[3] * i.quantity
 
-    with db.engine.begin() as connection:
-        # for i in potions_delivered:
-        #     update_potions(i.potion_type, i.quantity, connection)
-
-        # g_inventory = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
-        # globe = g_inventory.fetchone()
-        # red_ml = globe.num_red_ml
-        # green_ml = globe.num_green_ml
-        # blue_ml = globe.num_blue_ml
-        # dark_ml = globe.num_dark_ml
-
-        # # subtract potion mats used
-        # green_ml -= green_quant
-        # red_ml -= red_quant
-        # blue_ml -= blue_quant
-        # dark_ml -= dark_quant
-
-        # update ml in database
-        # connection.execute(sqlalchemy.text("""
-        #                             UPDATE global_inventory
-        #                             SET num_green_ml = :green, num_red_ml = :red, num_blue_ml = :blue, num_dark_ml = :dark
-        #                             WHERE id = 1;
-        #                             """),
-        #                             {'green': green_ml, 'red': red_ml, 'blue': blue_ml, 'dark': dark_ml})
-        
+    with db.engine.begin() as connection:        
         # insert into processed table
         trans_id = connection.execute(sqlalchemy.text("""INSERT INTO processed
                                                 (job_id, type) VALUES
@@ -208,7 +184,7 @@ def make_bottles(red, green, blue, dark, potion_stock, capacity, potion_count):
         potion_type = row.type
         quant_wanted = 0
         # make up to 3 potions as possible
-        while red >= potion_type[0] and green >= potion_type[1] and blue >= potion_type[2] and dark >= potion_type[3] and quant_wanted < 3:
+        while red >= potion_type[0] and green >= potion_type[1] and blue >= potion_type[2] and dark >= potion_type[3] and quant_wanted < (capacity // 12):
             quant_wanted += 1
             red -= potion_type[0]
             green -= potion_type[1]
