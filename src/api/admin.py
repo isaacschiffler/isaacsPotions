@@ -22,14 +22,9 @@ def reset():
                 result = connection.execute(sqlalchemy.text("SELECT * FROM globe;")) # for debugging
                 globe = result.fetchone()
                 print("Current database status before reset: " + str(globe[0]) + " " + str(globe[1]) + " " + str(globe[2]) + " " + str(globe[3]) + " " + str(globe[4])) # for debugging
-                # connection.execute(sqlalchemy.text("""
-                #                                 UPDATE global_inventory
-                #                                 SET num_green_ml = 0, gold = 100, num_dark_ml = 0, num_red_ml = 0, num_blue_ml = 0
-                #                                 WHERE id = 1;
-                #                                 """))
+
                 
                 # reset/clear cart stuff and ledgers
-                connection.execute(sqlalchemy.text("UPDATE potion_inventory SET quantity = 0;"))
                 connection.execute(sqlalchemy.text("DELETE FROM cart_items"))
                 connection.execute(sqlalchemy.text("DELETE FROM carts"))
                 connection.execute(sqlalchemy.text("DELETE FROM barrel_ledger"))
