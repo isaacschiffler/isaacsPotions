@@ -4,7 +4,6 @@ from src.api import auth
 from enum import Enum
 import sqlalchemy
 from src import database as db
-import uuid
 
 router = APIRouter(
     prefix="/carts",
@@ -55,18 +54,105 @@ def search_orders(
     time is 5 total line items.
     """
 
+    json = []
+
+    # figure out what column we're sorting by
+    if sort_col is search_sort_options.customer_name:
+        sort_by = db.carts.c.name
+    elif sort_col is search_sort_options.item_sku:
+        sort_by = db.potion_types.c.sku
+    elif sort_col is search_sort_options.line_item_total:
+        sort_by = (-db.potion_types.c.price * db.potion_ledger.c.quantity)
+    elif sort_col is search_sort_options.timestamp:
+        sort_by = db.processed.c.created_at
+    else:
+        # invalid
+        assert False
+
+
+    # generate sql statement for ordering
+    if sort_order is search_sort_order.desc:
+        # sort ascending
+        order_by = sqlalchemy.desc(sort_by)
+    elif sort_order is search_sort_order.asc:
+        # sort descending
+        order_by = sqlalchemy.asc(sort_by)
+    else:
+        # invalid
+        assert False
+
+    # *** quantity will be returned as negative ***
+    stmt = (
+        sqlalchemy.select(
+            db.processed.c.created_at.label("timestamp"),
+            db.potion_types.c.name.label("potion_name"),
+            db.potion_ledger.c.quantity.label("quantity"),
+            db.carts.c.name.label("customer"),
+            db.potion_ledger.c.potion_id.label("line_item_id"),
+            db.potion_types.c.price.label("price")
+        )
+        .join(db.carts, db.processed.c.job_id == db.carts.c.id)
+        .join(db.potion_ledger, db.processed.c.id == db.potion_ledger.c.trans_id)
+        .join(db.potion_types, db.potion_ledger.c.potion_id == db.potion_types.c.id)
+        .join(db.gold_ledger, db.processed.c.id == db.gold_ledger.c.trans_id)
+        .order_by(order_by)
+        .limit(6)
+    )
+
+    if search_page != "":
+        # configure which page
+        stmt = stmt.offset((int(search_page) - 1) * 5)
+
+    if customer_name != "":
+        # filter for similar names
+        stmt = stmt.where(db.carts.c.name.ilike(f"%{customer_name}%"))
+
+    if potion_sku != "":
+        # filter for sku
+        stmt = stmt.where(db.potion_types.c.sku.ilike(f"%{potion_sku}%"))
+
+    print(stmt)
+
+
+    with db.engine.begin() as connection:
+        result = connection.execute(stmt)
+        i = 0  # counter to see if there is enough for another page
+        for row in result:
+            i += 1
+            json.append({
+                "line_item_id": row.line_item_id,
+                "item_sku": str(-row.quantity) + " " + row.potion_name,
+                "customer_name": row.customer,
+                "line_item_total": row.price * -row.quantity,
+                "timestamp": row.timestamp
+            })
+
+    # configure page stuff
+    if i > 5:
+        another_page = True
+    else:
+        another_page = False
+
+    page = 1 if search_page == "" else int(search_page)  # get page number from search_page parameter
+
+    if page == 1:
+        # no previous page for sure because we are at first page
+        previous = ""
+    elif page > 1:
+        previous = "https://isaacspotions.onrender.com/carts/search/?search_page=" + str(page - 1) + "&sort_col=" + sort_col + "&sort_order=" + sort_order
+    else:
+        print("Not a valid page..." + str(page))
+
+    if another_page:
+        # there is at least one more page of data
+        next = "https://isaacspotions.onrender.com/carts/search/?search_page=" + str(page + 1) + "&sort_col=" + sort_col + "&sort_order=" + sort_order
+    else:
+        next = ""
+
     return {
-        "previous": "",
-        "next": "",
-        "results": [
-            {
-                "line_item_id": 1,
-                "item_sku": "1 oblivion potion",
-                "customer_name": "Scaramouche",
-                "line_item_total": 50,
-                "timestamp": "2021-01-01T00:00:00Z",
-            }
-        ],
+        "previous": previous,
+        "next": next,
+        "results": json,
     }
 
 
