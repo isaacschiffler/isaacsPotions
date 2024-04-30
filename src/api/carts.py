@@ -67,6 +67,7 @@ def search_orders(
         sort_by = db.processed.c.created_at
     else:
         # invalid
+        print("uhhhhh... search by what????")
         assert False
 
 
@@ -79,6 +80,7 @@ def search_orders(
         order_by = sqlalchemy.asc(sort_by)
     else:
         # invalid
+        print("uhhhhh... search ordering???")
         assert False
 
     # *** quantity will be returned as negative ***
