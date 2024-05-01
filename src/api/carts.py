@@ -119,10 +119,14 @@ def search_orders(
         result = connection.execute(stmt)
         i = 0  # counter to see if there is enough for another page
         for row in result:
+            if -row.quantity > 1:
+                plural = "s"
+            else:
+                plural = ""
             i += 1
             json.append({
                 "line_item_id": row.line_item_id,
-                "item_sku": str(-row.quantity) + " " + row.potion_name,
+                "item_sku": str(-row.quantity) + " " + row.potion_name + plural,
                 "customer_name": row.customer,
                 "line_item_total": row.price * -row.quantity,
                 "timestamp": row.timestamp
@@ -143,13 +147,13 @@ def search_orders(
         # no previous page for sure because we are at first page
         previous = ""
     elif page > 1:
-        previous = "https://isaacspotions.onrender.com/carts/search/?search_page=" + str(page - 1) + "&sort_col=" + sort_col + "&sort_order=" + sort_order
+        previous = str(page - 1)
     else:
         print("Not a valid page..." + str(page))
 
     if another_page:
         # there is at least one more page of data
-        next = "https://isaacspotions.onrender.com/carts/search/?search_page=" + str(page + 1) + "&sort_col=" + sort_col + "&sort_order=" + sort_order
+        next = str(page + 1)
     else:
         next = ""
 
