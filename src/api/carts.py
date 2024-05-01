@@ -114,8 +114,6 @@ def search_orders(
         # filter for sku
         stmt = stmt.where(db.potion_types.c.sku.ilike(f"%{potion_sku}%"))
 
-    print(stmt)
-
     with db.engine.begin() as connection:
         result = connection.execute(stmt)
         i = 0  # counter to see if there is enough for another page
@@ -134,8 +132,6 @@ def search_orders(
                 "timestamp": row.timestamp
             })
 
-    for j in range(0, len(json)):
-        print("Row" + str(j) + ": " + str(json[j]) + "\n")
 
     # configure page stuff
     if i > 5:
