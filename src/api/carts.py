@@ -90,7 +90,8 @@ def search_orders(
             db.potion_types.c.name.label("potion_name"),
             db.potion_ledger.c.quantity.label("quantity"),
             db.carts.c.name.label("customer"),
-            db.potion_ledger.c.potion_id.label("line_item_id"),
+            db.carts.c.id.label("cart_id"),
+            db.potion_ledger.c.potion_id.label("potion_id"),
             db.potion_types.c.price.label("price")
         )
         .join(db.carts, db.processed.c.job_id == db.carts.c.id)
@@ -124,8 +125,9 @@ def search_orders(
             else:
                 plural = ""
             i += 1
+            # creating line_item_id based on cart and potion id for given line item... assumes cart only has one instance of each potion_type
             json.append({
-                "line_item_id": row.line_item_id,
+                "line_item_id": int(str(row.cart_id) + str(row.potion_id)),
                 "item_sku": str(-row.quantity) + " " + row.potion_name + plural,
                 "customer_name": row.customer,
                 "line_item_total": row.price * -row.quantity,
