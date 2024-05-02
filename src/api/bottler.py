@@ -160,7 +160,7 @@ def make_bottles(red, green, blue, dark, potion_stock, capacity, potion_count, p
             continue
         quant_wanted = 0
         # make up to 3 potions as possible
-        while red >= potion_type[0] and green >= potion_type[1] and blue >= potion_type[2] and dark >= potion_type[3] and quant_wanted < (capacity // portioner):
+        while red >= potion_type[0] and green >= potion_type[1] and blue >= potion_type[2] and dark >= potion_type[3] and quant_wanted < (capacity // 5):
             quant_wanted += 1
             red -= potion_type[0]
             green -= potion_type[1]
