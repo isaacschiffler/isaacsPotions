@@ -118,6 +118,9 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         if potion_count / potion_cap > .75 and ml_count / capacity > .75:
             # save some money...
             return []
+        elif ml_count / capacity > .75:
+            # save some money...
+            return []
 
         # get catalog offerings for each color barrel
         red_offers = [x for x in wholesale_catalog if x.potion_type == [1, 0, 0, 0]]

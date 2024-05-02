@@ -29,44 +29,6 @@ potion_names = {
     (0, 50, 50, 0): "teal potion",
     (0, 0, 0, 100): "dark potion"
 }
-
-# this functions updates quant of potions we have in inventory when deliveries occur
-def update_potions(type, quantity, connection):
-    tuple_type = tuple(type)
-    name = potion_names[tuple_type]
-    sku = name.upper()
-    sku = sku.replace(' ', '_')
-    sku += "_0"
-    result = connection.execute(sqlalchemy.text("SELECT * FROM potion_inventory WHERE sku = :sku LIMIT 1;"), 
-                                {'sku': sku})
-    row = result.fetchone()
-    # check for existence in case we are making a new potion recipe we haven't before and its not in the database
-    if not row:
-        # insert
-        price = type[0] * .5 + type[1] * .5 + type[2] * .6 + type[3] * .7 # basic price assignment just based on quantity of each potion color included...
-        connection.execute(sqlalchemy.text("INSERT INTO potion_inventory (sku, r, g, b, d, quantity, name, price) VALUES (:sku, :r, :g, :b, :d, :quant, :name, :price);"), 
-                           {'sku': sku,
-                            'r': type[0],
-                            'g': type[1],
-                            'b': type[2],
-                            'd': type[3],
-                            'quant': quantity,
-                            'name': name,
-                            'price': price
-                            })
-        print("inserting potion type: " + str(type))
-    else:
-        # update
-        print("Current potion updating: " + str(row))
-        current_quant = row.quantity
-        connection.execute(sqlalchemy.text("""
-                                    UPDATE potion_inventory
-                                    SET quantity = :quant
-                                    WHERE sku = :sku;
-                                    """),
-                                    {'quant': quantity + current_quant, 
-                                     'name': name,
-                                     'sku': sku})
     
 
 @router.post("/newRecipe")
@@ -162,7 +124,7 @@ def get_bottle_plan():
         capacity = globe.potion_capacity
         ml_cap = globe.ml_capacity
 
-        # pick out what portion of capacity we want to make for each potion... (terrible description...)
+        # pick out what portion of capacity we want to make for each potion (terrible description...)
         if ml_count < (ml_cap / 3):
             potion_portionator = 12
         elif ml_count < (ml_cap / 2):
