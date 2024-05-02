@@ -43,7 +43,7 @@ def get_capacity_plan():
         ml_cap = mls.ml_capacity
         potion_cap = mls.potion_capacity
     
-    if ml_count > (.75 * ml_cap) and gold > 1000:
+    if ml_count > (.6 * ml_cap) and gold > 1000:
         gold -= 1000
         add_ml_cap = 1
     
@@ -69,7 +69,7 @@ def deliver_capacity_plan(capacity_purchase : CapacityPurchase, order_id: int):
     """
     mls = capacity_purchase.ml_capacity * 10000
     potions = capacity_purchase.potion_capacity * 50
-    gold = capacity_purchase.ml_capacity + capacity_purchase.potion_capacity
+    gold = (capacity_purchase.ml_capacity + capacity_purchase.potion_capacity) * 1000
     with db.engine.begin() as connection:
         # add to processed
         trans_id = connection.execute(sqlalchemy.text("""INSERT INTO processed
