@@ -32,20 +32,28 @@ def get_capacity_plan():
     capacity unit costs 1000 gold.
     """
 
-    p_cap = 0
-    ml_cap = 0
+    add_p_cap = 0
+    add_ml_cap = 0
 
     with db.engine.begin() as connection:
         gold = connection.execute(sqlalchemy.text("SELECT gold FROM globe")).fetchone()[0]
+        potion_count = connection.execute(sqlalchemy.text("SELECT SUM(quantity) FROM potions")).fetchone()[0]
+        mls = connection.execute(sqlalchemy.text("SELECT red_ml, green_ml, blue_ml, dark_ml, ml_capacity, potion_capacity from globe")).fetchone()
+        ml_count = mls.red_ml + mls.green_ml + mls.blue_ml + mls.dark_ml
+        ml_cap = mls.ml_capacity
+        potion_cap = mls.potion_capacity
     
-    if gold > 2000:
-        # buy more capacity because we can!
-        p_cap = 1
-        ml_cap = 1
+    if ml_count > (.75 * ml_cap) and gold > 1000:
+        gold -= 1000
+        add_ml_cap = 1
+    
+    if potion_count > (.75 * potion_cap) and gold > 1000:
+        gold -= 1000
+        add_p_cap = 1
 
     return {
-        "potion_capacity": p_cap,
-        "ml_capacity": ml_cap
+        "potion_capacity": add_p_cap,
+        "ml_capacity": add_ml_cap
         }
 
 class CapacityPurchase(BaseModel):

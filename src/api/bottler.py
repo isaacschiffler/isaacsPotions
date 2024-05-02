@@ -158,12 +158,22 @@ def get_bottle_plan():
         green_ml = globe.green_ml
         blue_ml = globe.blue_ml
         dark_ml = globe.dark_ml
+        ml_count = red_ml + green_ml + blue_ml + dark_ml
         capacity = globe.potion_capacity
+        ml_cap = globe.ml_capacity
+
+        # pick out what portion of capacity we want to make for each potion... (terrible description...)
+        if ml_count < (ml_cap / 3):
+            potion_portionator = 12
+        elif ml_count < (ml_cap / 2):
+            potion_portionator = 8
+        else:
+            potion_portionator = 5
 
         potion_inventory = connection.execute(sqlalchemy.text("SELECT type FROM potions ORDER BY quantity ASC;")).fetchall()
         potion_count = connection.execute(sqlalchemy.text("SELECT SUM(quantity) FROM potions")).fetchone()[0]
 
-        bottle_plan = make_bottles(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, capacity, potion_count)
+        bottle_plan = make_bottles(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, capacity, potion_count, potion_portionator)
 
     print(bottle_plan) # for debugging
         
@@ -176,15 +186,19 @@ available, and have a decent stock of basic pure potions, also a decent stock
 of high profit yielding potions and high purchase potions..."""
 # potion_stock is a sql query result that returns all potions sorted by least quantity in stock
 # red, green, blue, dark is the ml quantities we have in our global inventory for each respective color
-def make_bottles(red, green, blue, dark, potion_stock, capacity, potion_count):
+def make_bottles(red, green, blue, dark, potion_stock, capacity, potion_count, portioner):
     # to start lets just make a potion with proportions based on what we have lowest stock of and can make given ml stock
     bottle_plan = []
+
     for row in potion_stock:
         # try to make the current potion
         potion_type = row.type
+        if row.quantity >= (capacity / 5):
+            # don't make any more if we already have a decent amount, make others
+            continue
         quant_wanted = 0
         # make up to 3 potions as possible
-        while red >= potion_type[0] and green >= potion_type[1] and blue >= potion_type[2] and dark >= potion_type[3] and quant_wanted < (capacity // 12):
+        while red >= potion_type[0] and green >= potion_type[1] and blue >= potion_type[2] and dark >= potion_type[3] and quant_wanted < (capacity // portioner):
             quant_wanted += 1
             red -= potion_type[0]
             green -= potion_type[1]
