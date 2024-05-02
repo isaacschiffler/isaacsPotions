@@ -107,11 +107,17 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         print(f"Current database status: {str(globe.gold)} {str(globe.red_ml)} {str(globe.green_ml)} {str(globe.blue_ml)} {str(globe.dark_ml)}")
         gold = globe.gold
         capacity = globe.ml_capacity
+        potion_cap = globe.potion_capacity
         red_ml = globe.red_ml
         green_ml = globe.green_ml
         blue_ml = globe.blue_ml
         dark_ml = globe.dark_ml
         ml_count = red_ml + green_ml + blue_ml + dark_ml
+
+        potion_count = connection.execute(sqlalchemy.text("SELECT SUM(quantity) FROM potions")).fetchone()[0]
+        if potion_count / potion_cap > .75 and ml_count / capacity > .75:
+            # save some money...
+            return []
 
         # get catalog offerings for each color barrel
         red_offers = [x for x in wholesale_catalog if x.potion_type == [1, 0, 0, 0]]
