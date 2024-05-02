@@ -115,7 +115,7 @@ def get_bottle_plan():
     Basic logic for now: Make up to 3 additional potions starting from least stocked
     """
     with db.engine.begin() as connection:
-        globe = connection.execute(sqlalchemy.text("SELECT red_ml, green_ml, blue_ml, dark_ml, potion_capacity FROM globe")).fetchone()
+        globe = connection.execute(sqlalchemy.text("SELECT red_ml, green_ml, blue_ml, dark_ml, potion_capacity, ml_capacity FROM globe")).fetchone()
         red_ml = globe.red_ml
         green_ml = globe.green_ml
         blue_ml = globe.blue_ml
