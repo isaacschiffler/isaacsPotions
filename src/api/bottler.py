@@ -132,7 +132,7 @@ def get_bottle_plan():
         else:
             potion_portionator = 5
 
-        potion_inventory = connection.execute(sqlalchemy.text("SELECT type FROM potions ORDER BY quantity ASC;")).fetchall()
+        potion_inventory = connection.execute(sqlalchemy.text("SELECT type, quantity FROM potions ORDER BY quantity ASC;")).fetchall()
         potion_count = connection.execute(sqlalchemy.text("SELECT SUM(quantity) FROM potions")).fetchone()[0]
 
         bottle_plan = make_bottles(red_ml, green_ml, blue_ml, dark_ml, potion_inventory, capacity, potion_count, potion_portionator)
