@@ -115,10 +115,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         ml_count = red_ml + green_ml + blue_ml + dark_ml
 
         potion_count = connection.execute(sqlalchemy.text("SELECT SUM(quantity) FROM potions")).fetchone()[0]
-        if potion_count / potion_cap > .75 and ml_count / capacity > .75:
-            # save some money...
-            return []
-        elif ml_count / capacity > .75:
+        if ml_count / capacity > .75:
             # save some money...
             return []
         
