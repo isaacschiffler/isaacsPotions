@@ -121,6 +121,11 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         elif ml_count / capacity > .75:
             # save some money...
             return []
+        
+        # create a diff capacity to make sure we can get some dark ml
+        dark_cap = capacity
+        if dark_ml < 100 and capacity != 10000:
+            capacity -= 10000
 
         # get catalog offerings for each color barrel
         red_offers = [x for x in wholesale_catalog if x.potion_type == [1, 0, 0, 0]]
@@ -144,11 +149,11 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
 
         cost = 0
 
-        while dark_ml < capacity / part_of_capacity:
+        while dark_ml < dark_cap / part_of_capacity:
             # try to buy best offer barrel
             bought = False
             for i in dark_offers:
-                if try_to_buy(i, gold, what_i_want, ml_count, capacity) == True:
+                if try_to_buy(i, gold, what_i_want, ml_count, dark_cap) == True:
                     gold -= i.price
                     barrels_bought += 1
 
