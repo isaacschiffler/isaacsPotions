@@ -92,11 +92,15 @@ def search_orders(
             db.carts.c.name.label("customer"),
             db.carts.c.id.label("cart_id"),
             db.potion_ledger.c.potion_id.label("potion_id"),
-            db.potion_types.c.price.label("price")
+            db.cart_items.c.price.label("price")
         )
         .join(db.carts, db.processed.c.job_id == db.carts.c.id)
         .join(db.potion_ledger, db.processed.c.id == db.potion_ledger.c.trans_id)
         .join(db.potion_types, db.potion_ledger.c.potion_id == db.potion_types.c.id)
+        .join(db.cart_items, sqlalchemy.and_(
+            db.carts.c.id == db.cart_items.c.cart_id,
+            db.potion_ledger.c.potion_id == db.cart_items.c.potion_id
+            ))
         .join(db.gold_ledger, db.processed.c.id == db.gold_ledger.c.trans_id)
         .order_by(order_by)
         .limit(6)
