@@ -19,7 +19,7 @@ def get_catalog():
                                                     FROM potion_types 
                                                     JOIN potions ON potion_types.type = potions.type
                                                     WHERE potions.quantity > 0 
-                                                    ORDER BY quantity DESC;""")).fetchall()
+                                                    ORDER BY quantity ASC;""")).fetchall()
         
         for row in result:
             print("Adding to catalog: " + str(row))
