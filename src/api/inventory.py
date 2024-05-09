@@ -44,7 +44,7 @@ def get_capacity_plan():
         potion_cap = mls.potion_capacity
     
 
-    if ml_count > (.5 * ml_cap) and gold >= 2000 and ml_cap < 100000:
+    if ml_count > (.6 * ml_cap) and gold >= 2000 and ml_cap < 100000:
         while gold >= 1000 * add_ml_cap + 1000:
             add_ml_cap += 1
             gold -= 1000
