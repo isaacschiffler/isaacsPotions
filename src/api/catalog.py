@@ -22,6 +22,9 @@ def get_catalog():
                                                     ORDER BY quantity ASC;""")).fetchall()
         
         for row in result:
+            if row.type == [100, 0, 0, 0]:
+                # don't sell reds today...
+                continue
             print("Adding to catalog: " + str(row))
             sku = row.sku
             type = row.type
