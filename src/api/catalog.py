@@ -20,7 +20,7 @@ def get_catalog():
                                                     JOIN potions ON potion_types.type = potions.type
                                                     WHERE potions.quantity > 0 
                                                     ORDER BY potions.quantity ASC
-                                                    LIMIT 10 OFFSET 2;""")).fetchall()
+                                                    LIMIT 10;""")).fetchall()
         
         for row in result:
             if row.type == [0, 1, 0, 0]:
