@@ -158,7 +158,7 @@ def make_bottles(red, green, blue, dark, potion_stock, capacity, potion_count, p
             continue
         # try to make the current potion
         potion_type = row.type
-        if row.quantity >= (capacity / 5):
+        if row.quantity >= (capacity / 8):
             # don't make any more if we already have a decent amount, make others
             continue
         quant_wanted = 0
