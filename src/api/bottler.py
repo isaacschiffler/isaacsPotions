@@ -153,8 +153,8 @@ def make_bottles(red, green, blue, dark, potion_stock, capacity, potion_count, p
     bottle_plan = []
 
     for row in potion_stock:
-        # don't make any more lime potions... sad flop...
-        if row.type == [30, 70, 0, 0]:
+        # don't make any more lime potions... sad flop... also don't make whites anymore i think
+        if row.type == [30, 70, 0, 0] or row.type == [34, 33, 33, 0]:
             continue
         # try to make the current potion
         potion_type = row.type
