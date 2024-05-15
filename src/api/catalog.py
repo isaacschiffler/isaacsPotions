@@ -23,7 +23,7 @@ def get_catalog():
                                                     LIMIT 10;""")).fetchall()
         
         for row in result:
-            if row.type == [50, 0, 50, 0]:
+            if row.type == [50, 0, 50, 0] or row.type == [50, 50, 0, 0] or row.type == [34, 33, 33]:
                 # no ____ today!
                 continue
             print("Adding to catalog: " + str(row))
