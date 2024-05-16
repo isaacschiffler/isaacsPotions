@@ -19,7 +19,7 @@ def get_catalog():
                                                     FROM potion_types 
                                                     JOIN potions ON potion_types.type = potions.type
                                                     WHERE potions.quantity > 0 
-                                                    ORDER BY potions.quantity ASC
+                                                    ORDER BY potions.quantity ASC, RANDOM()
                                                     LIMIT 10;""")).fetchall()
         
         for row in result:
