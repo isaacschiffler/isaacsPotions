@@ -237,7 +237,7 @@ def check_if_in(sku: str, selections):
 '''This function checks to see if we can buy the given barrel. 
 If we can, it adds it to the plan and returns True, returns False if not'''
 def try_to_buy(barrel: Barrel, gold, what_i_want, ml_count, capacity):
-    if barrel.price <= gold and barrel.quantity > 0 and ml_count + barrel.ml_per_barrel <= capacity:
+    if barrel.price <= gold and barrel.quantity > 0 and ml_count + barrel.ml_per_barrel <= capacity and barrel.ml_per_barrel >= 10000:
         wanted_already = check_if_in(barrel.sku, what_i_want)
         if wanted_already == -1:
             what_i_want.append({
