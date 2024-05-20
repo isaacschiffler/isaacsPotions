@@ -23,7 +23,7 @@ def get_catalog():
                                                     LIMIT 10;""")).fetchall()
         
         for row in result:
-            if row.type == [0, 0, 100, 0] or row.name == "orange potion":
+            if row.name == "orange potion":
                 # no ____ today!
                 continue
             print("Adding to catalog: " + str(row))
