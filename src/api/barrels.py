@@ -115,9 +115,9 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         ml_count = red_ml + green_ml + blue_ml + dark_ml
 
         potion_count = connection.execute(sqlalchemy.text("SELECT SUM(quantity) FROM potions")).fetchone()[0]
-        if ml_count / capacity > .75:
-            # save some money...
-            return []
+        # if ml_count / capacity > .75:
+        #     # save some money...
+        #     return []
         
         # create a diff capacity to make sure we can get some dark ml
         dark_cap = capacity
