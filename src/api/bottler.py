@@ -154,18 +154,17 @@ def make_bottles(red, green, blue, dark, potion_stock, capacity, potion_count, p
 
     for row in potion_stock:
         # don't make any more lime potions... sad flop... also don't make whites anymore i think
-        if row.type == [30, 70, 0, 0] or row.type == [34, 33, 33, 0] or row.type == [0, 100, 0, 0]:
-            # putting blu  on hold to make sure we have enough for all potions; now green
+        if row.type == [30, 70, 0, 0] or row.type == [34, 33, 33, 0]:
             continue
         # try to make the current potion
         potion_type = row.type
-        if row.quantity >= (capacity / 5):
+        if row.quantity >= (capacity / 8):
             # don't make any more if we already have a decent amount, make others
             continue
         quant_wanted = 0
         # make up to 3 potions as possible
-        while red >= potion_type[0] and green >= potion_type[1] and blue >= potion_type[2] and dark >= potion_type[3] and quant_wanted < (capacity // 10):
-            if (row.quantity + quant_wanted) >= (capacity / 5) or (row.type == [0, 0, 100, 0] and quant_wanted + row.quantity >= 20):
+        while red >= potion_type[0] and green >= potion_type[1] and blue >= potion_type[2] and dark >= potion_type[3]:
+            if (row.quantity + quant_wanted) >= (capacity / 8):
                 break
             quant_wanted += 1
             red -= potion_type[0]
