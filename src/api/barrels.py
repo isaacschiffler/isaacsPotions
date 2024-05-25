@@ -99,9 +99,9 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     print(wholesale_catalog)
 
     what_i_want = []
-    if what_i_want == []:
-        print("not buyin anymoe")
-        return what_i_want
+    # if what_i_want == []:
+    #     print("not buyin anymoe")
+    #     return what_i_want
 
     with db.engine.begin() as connection:
         # get global inventory info from the ledgers through the globe view
